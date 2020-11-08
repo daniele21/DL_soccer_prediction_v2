@@ -335,60 +335,6 @@ def data_preprocessing(league_df, params):
 
     return input_data
 
-    # SAVED FILE MANAGMENT
-
-    # folder = f'{os.environ["RESOURCES_PATH"]}{league_name}/'
-    # home_data_path = f'{folder}{league_name}-npm={n_prev_match}-home_data.csv'
-    # away_data_path = f'{folder}{league_name}-npm={n_prev_match}-away_data.csv'
-    
-    # if(cache.check_file_in_cache(home_data_path) and
-    #    cache.check_file_in_cache(away_data_path)):
-    #
-    #     print('\n\n------------------ REQUEST --------------------')
-    #     print('\n Processed data found. Do you want to overwrite it ?  [y/n]')
-    #     response = input()
-    #     if('y' in str(response)):
-    #         logger.info('\t\t\t > Data preprocessing')
-    #         data = league_df.copy(deep=True)
-    #
-    #         data = data.drop('league', axis=1)
-    #         n_prev_match = int(params['n_prev_match'])
-    #
-    #         input_data = _split_teams(data, n_prev_match)
-    #         home_data = input_data['home_data']
-    #         away_data = input_data['away_data']
-            
-        #     # SAVING DATA
-        #     logger.info('\t\t > Writing data preprocessed into CACHE')
-        #     cache.write_csv_on_cache(home_data, home_data_path)
-        #     cache.write_csv_on_cache(away_data, away_data_path)
-        #
-        # elif('n' in str(response)):
-        #     logger.info('\t\t > Reading data preprocessed')
-        #     home_data = cache.read_csv_from_cache(home_data_path)
-        #     away_data = cache.read_csv_from_cache(away_data_path)
-        #
-        #     input_data = {'home_data':home_data,
-        #                   'away_data':away_data}
-        #
-    # else:
-    #     logger.info('\t\t\t > Data preprocessing')
-    #     data = league_df.copy(deep=True)
-    #
-    #     data = data.drop('league', axis=1)
-    #     n_prev_match = int(params['n_prev_match'])
-    #
-    #     input_data = _split_teams(data, n_prev_match)
-    #     home_data = input_data['home_data']
-    #     away_data = input_data['away_data']
-    #
-    #     # SAVING DATA
-    #     logger.info('\t\t > Writing data preprocessed into CACHE')
-    #     cache.write_csv_on_cache(home_data, home_data_path)
-    #     cache.write_csv_on_cache(away_data, away_data_path)
-        
-    # return input_data
-
 
 def get_last_round(test_data):
     

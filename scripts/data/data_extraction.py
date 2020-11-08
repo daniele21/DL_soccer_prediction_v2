@@ -76,10 +76,10 @@ def extract_test_data(league_name, n_prev_match, test_size):
 
     for path in paths:
         season_df = extract_season_data(path, season_i, league_name)
-        season_df = season_df.iloc[-test_size:]
         league_df = league_df.append(season_df, sort=False)
 
-    league_df = feature_engineering_league(season_df, n_prev_match)
+    league_df = league_df.iloc[-test_size:]
+    league_df = feature_engineering_league(league_df, n_prev_match)
 
     return league_df
     

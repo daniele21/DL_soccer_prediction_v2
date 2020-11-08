@@ -24,34 +24,44 @@ def extract_data_league(params):
 
     return input_data
 
-def split_train_test(input_data, test_size=10):
-    home = input_data['home_data'].copy(deep=True)
-    away = input_data['away_data'].copy(deep=True)
-    
-    train_home = home[home['f-WD'].isnull()==False]
-    train_away = away[away['f-WD'].isnull()==False]
-    
-#    home = home.iloc[-test_size:]
-#    away = away.iloc[-test_size:]
-    
-    test_home = home[home['f-WD'].isnull()]
-    test_away = away[away['f-WD'].isnull()]
-    test_home = get_last_round(test_home)
-    test_away = get_last_round(test_away)
-    
-    train_data = {'home_data':train_home, 'away_data':train_away}
-    test_data = {'home_data':test_home, 'away_data':test_away}
-    
-    return train_data, test_data
+# def split_train_test(input_data, test_size=10):
+#     home = input_data['home_data'].copy(deep=True)
+#     away = input_data['away_data'].copy(deep=True)
+#
+#     train_home = home[home['f-WD'].isnull()==False]
+#     train_away = away[away['f-WD'].isnull()==False]
+#
+# #    home = home.iloc[-test_size:]
+# #    away = away.iloc[-test_size:]
+#
+#     test_home = home[home['f-WD'].isnull()]
+#     test_away = away[away['f-WD'].isnull()]
+#     test_home = get_last_round(test_home)
+#     test_away = get_last_round(test_away)
+#
+#     train_data = {'home_data':train_home, 'away_data':train_away}
+#     test_data = {'home_data':test_home, 'away_data':test_away}
+#
+#     return train_data, test_data
            
 
 def generate_dataset(input_data, params):
-    
+
+    train = bool(params['train'])
+    normalize = bool(params['normalize'])
+    home_data = input_data['home']
+    away_data = input_data['away']
+
     if(int(params['version']) == 1):
-        feat_eng = Feature_engineering_v1(input_data,
-                                          normalize=params['normalize'])
-        
-        data = feat_eng.tranforms(input_data)
+        home_feat_eng = Feature_engineering_v1(home_data, normalize=normalize)
+        away_feat_eng = Feature_engineering_v1(away_data, normalize=normalize)
+
+        feat_eng = {'home':home_feat_eng,
+                    'away':away_feat_eng}
+
+        data = {'home':home_feat_eng.transforms(home_data, train),
+                'away':away_feat_eng.transforms(away_data, train)}
+
     else:
         raise ValueError('---- Error version number ----')
         
