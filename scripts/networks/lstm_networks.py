@@ -33,10 +33,6 @@ class LSTM_Network(nn.Module):
         
         h_lstm, _ = self.lstm(x)
         
-        # if(self.dataset_type == 'windowed'):
-        #     batch_size = h_lstm.shape[0]
-        #     h_lstm = h_lstm.reshape(batch_size, -1)
-        
         h_dense = self.dense_act(self.dense(h_lstm))
         
         out = self.fc_act(self.fc(h_dense))
@@ -79,8 +75,6 @@ class LSTM_FCN_Network(nn.Module):
         out_features = 1
         self.fc = nn.Conv1d(in_features,
                             out_features,
-                            stride=1,
-                            padding=0,
                             kernel_size=1)
         self.fc_act = nn.Sigmoid()
 
@@ -89,8 +83,6 @@ class LSTM_FCN_Network(nn.Module):
         h, _ = self.lstm(x)
         h = h.transpose(1,2)
 
-        # for i in range(len(self.conv_layers)):
-        #     h = self.conv_acts[i](self.conv_layers[i](h))
         h = self.conv_layers(h)
 
         out = self.fc_act(self.fc(h))
@@ -99,10 +91,12 @@ class LSTM_FCN_Network(nn.Module):
         return out
 
 
-class LSTM_Soccer_Network(nn.Module):
+
+
+class LSTM_Soccer_Network_v1(nn.Module):
     
     def __init__(self, in_features, params):
-        super(LSTM_Soccer_Network, self).__init__()
+        super(LSTM_Soccer_Network_v1, self).__init__()
         
         in_features = in_features          
         
@@ -121,8 +115,27 @@ class LSTM_Soccer_Network(nn.Module):
         # output = output.squeeze()
         
         return output, out_home, out_away
-        
-        
+
+
+class LSTM_Soccer_Network_v2(nn.Module):
+
+    def __init__(self, in_features, params):
+        super(LSTM_Soccer_Network_v2, self).__init__()
+
+        in_features = in_features
+
+        self.home_network = LSTM_FCN_Network('home', in_features, params)
+        self.away_network = LSTM_FCN_Network('away', in_features, params)
+
+    def forward(self, x_home, x_away):
+        out_home = self.home_network(x_home)
+        out_away = self.away_network(x_away)
+
+        output = torch.cat([out_home, out_away])
+
+        return output, out_home, out_away
+
+
         
         
         
