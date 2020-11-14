@@ -51,9 +51,12 @@ class Training_Soccer_Dataset(Dataset):
 
 class Soccer_Dataset(Dataset):
     
-    def __init__(self, x, y=None, window_size=None, train=False):
+    def __init__(self, x,
+                 y=None,
+                 window_size=None,
+                 train=False):
 
-        self.x = x
+        self.x = x.drop('f-WD', axis=1)
         self.y = y
         self.window_size = window_size
         self.train = train
@@ -93,40 +96,40 @@ class Soccer_Dataset(Dataset):
             return x
 
 class Windowed_Soccer_Dataset(Dataset):
-    
+
     def __init__(self, data, window_size, train=True):
-        
+
         self.x_home = data['home'].drop('f-WD', axis=1)
         self.y_home = data['home']['f-WD']
-        
+
         self.x_away = data['away'].drop('f-WD', axis=1)
         self.y_away = data['away']['f-WD']
-        
+
         self.window_size = 0 if window_size is None else window_size
-        
+
         self.train = train
-        
+
         print(f'\t {self.x_home.shape},{self.y_home.shape} - {self.x_away.shape},{self.y_away.shape}')
-        
+
     def _to_tensor(self, data):
         return torch.Tensor(data.values)
-        
+
     def __len__(self):
         return len(self.x_home) - self.window_size
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
-            
+
         x_start, x_end = idx, idx+self.window_size-1
         y_start, y_end = idx+self.window_size-1, idx+self.window_size
 
         x_home = data_to_tensor(self.x_home[x_start:x_end])
         x_away = data_to_tensor(self.x_away[x_start:x_end])
-        
+
         y_home = data_to_tensor(self.y_home[y_start:y_end])
         y_away = data_to_tensor(self.y_away[y_start:y_end])
-        
+
         return x_home, y_home, x_away, y_away
   
 def create_training_dataloader(input_data, params):
@@ -163,10 +166,6 @@ def create_training_dataloader(input_data, params):
     else:
         dataset_fn = Training_Soccer_Dataset
         
-    # elif(params['dataset'] == 'windowed'):
-    #     dataset_fn = Windowed_Soccer_Dataset
-    #     print('> Creating Windowed Soccer Dataset')
-        
     print('  > Training Set:')
     dataset['train'] = dataset_fn(train_data,
                                   window_size=window,
@@ -198,7 +197,7 @@ def create_test_dataloader(test_data):
         x = test_data[s]
         y = None
 
-        test_dataset[s] = Soccer_Dataset(x, y, window_size=None, train=False)
+        test_dataset[s] = Soccer_Dataset(x, train=False)
     
     test_dataloader = DataLoader(test_dataset,
                                  batch_size=1)
