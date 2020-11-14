@@ -8,7 +8,7 @@ from scripts.data.data_extraction import Database_Manager
 from scripts.data.preprocessing import (data_preprocessing,
                                         get_last_round)
 from scripts.data.feature_engineering import Feature_engineering_v1
-from scripts.data.datasets import create_dataloader, create_test_dataloader
+from scripts.data.datasets import create_test_dataloader, create_training_dataloader
 from scripts.utils.utils import logger, spent_time
 from core.file_manager.saving import save_object
 
@@ -65,12 +65,12 @@ def generate_dataset(input_data, params):
     else:
         raise ValueError('---- Error version number ----')
         
-    dataloader, in_features = create_dataloader(data, params)
+    dataloader, in_features = create_training_dataloader(data, params)
     
-    path_feat_eng = f'{os.environ["CKP_MODEL_PATH"]}{os.environ["MODEL_NAME"]}/' + \
-                     'feat_eng_object'
-    logger.info(f' > Saving Feat.Eng object at {path_feat_eng}')
-    save_object(feat_eng, path_feat_eng)
+    # path_feat_eng = f'{os.environ["CKP_MODEL_PATH"]}{os.environ["MODEL_NAME"]}/' + \
+    #                  'feat_eng_object'
+    # logger.info(f' > Saving Feat.Eng object at {path_feat_eng}')
+    # save_object(feat_eng, path_feat_eng)
     
     return dataloader, feat_eng, in_features
 
