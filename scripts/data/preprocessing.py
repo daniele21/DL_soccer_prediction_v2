@@ -6,7 +6,6 @@ import os
 from tqdm import tqdm
 
 from scripts.data import constants as K
-from scripts.data import data_cache as cache
 from scripts.data.data_utils import (search_previous_matches,
                                      search_future_features,
                                      search_future_WDL,
@@ -16,6 +15,7 @@ from scripts.data.data_utils import (search_previous_matches,
                                      compute_outcome_match,
                                      convert_result_1X2_to_WDL)
 from core.logger.logging import logger
+from core.file_manager.os_utils import exists
 from core.time_decorator import timing
 from multiprocessing import Pool
 from functools import partial
@@ -322,16 +322,25 @@ def data_preprocessing(league_df, params):
 
     n_prev_match = int(params['n_prev_match'])
     train = bool(params['train'])
-    test_size = int(params['test_size'])
+    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else None
+    league_dir = params['league_dir'] if 'league_dir' in list(params.keys()) else None
+    league_name = params['league_name']
 
     data = league_df.copy(deep=True)
 
     if(train == False):
-        data = data.iloc[-test_size:]
+        data = data.iloc[-test_size:] if test_size is not None else data
 
-    input_data = _split_teams(data, n_prev_match)
-    home_data = input_data['home']
-    away_data = input_data['away']
+    input_data = {}
+    for x in ['home', 'away']:
+        prep_league_path = f'{league_dir}{league_name}/prep_{x}_{league_name}_npm={n_prev_match}.csv'
+        if(league_dir is not None and exists(prep_league_path)):
+            input_data[x] = pd.read_csv(prep_league_path, index_col=0)
+
+    if(len(input_data) != 2):
+        input_data = _split_teams(data, n_prev_match)
+        home_data = input_data['home']
+        away_data = input_data['away']
 
     return input_data
 

@@ -5,11 +5,10 @@ import os
 
 from scripts.data import constants as K
 from scripts.data.data_extraction import Database_Manager
-from scripts.data.preprocessing import (data_preprocessing,
-                                        get_last_round)
+from scripts.data.preprocessing import data_preprocessing
 from scripts.data.feature_engineering import Feature_engineering_v1
 from scripts.data.datasets import create_test_dataloader, create_training_dataloader
-from scripts.utils.utils import logger, spent_time
+from scripts.utils.utils import logger
 from core.file_manager.saving import save_object
 
 def extract_data_league(params):
@@ -22,28 +21,7 @@ def extract_data_league(params):
     # DATA PREPROCESSING
     input_data = data_preprocessing(league_csv, params)
 
-    return input_data
-
-# def split_train_test(input_data, test_size=10):
-#     home = input_data['home_data'].copy(deep=True)
-#     away = input_data['away_data'].copy(deep=True)
-#
-#     train_home = home[home['f-WD'].isnull()==False]
-#     train_away = away[away['f-WD'].isnull()==False]
-#
-# #    home = home.iloc[-test_size:]
-# #    away = away.iloc[-test_size:]
-#
-#     test_home = home[home['f-WD'].isnull()]
-#     test_away = away[away['f-WD'].isnull()]
-#     test_home = get_last_round(test_home)
-#     test_away = get_last_round(test_away)
-#
-#     train_data = {'home_data':train_home, 'away_data':train_away}
-#     test_data = {'home_data':test_home, 'away_data':test_away}
-#
-#     return train_data, test_data
-           
+    return league_csv, input_data
 
 def generate_dataset(input_data, params):
 
@@ -51,6 +29,7 @@ def generate_dataset(input_data, params):
     normalize = bool(params['normalize'])
     home_data = input_data['home']
     away_data = input_data['away']
+    save_dir = params['save_dir']
 
     if(int(params['version']) == 1):
         home_feat_eng = Feature_engineering_v1(home_data, normalize=normalize)
@@ -66,11 +45,11 @@ def generate_dataset(input_data, params):
         raise ValueError('---- Error version number ----')
         
     dataloader, in_features = create_training_dataloader(data, params)
-    
-    # path_feat_eng = f'{os.environ["CKP_MODEL_PATH"]}{os.environ["MODEL_NAME"]}/' + \
-    #                  'feat_eng_object'
-    # logger.info(f' > Saving Feat.Eng object at {path_feat_eng}')
-    # save_object(feat_eng, path_feat_eng)
+
+    if(save_dir is not None):
+        filepath = f'{save_dir}feat_eng'
+        logger.info(f' > Saving Feat.Eng object at {filepath}')
+        save_object(feat_eng, filepath)
     
     return dataloader, feat_eng, in_features
 
@@ -124,33 +103,6 @@ def generate_test_dataset(test_data, feat_eng, inference):
     dataloader = create_test_dataloader(data, inference=inference)
     
     return dataloader
-
-
-
-
-
-
-def test_data():
-    league_params = {'league_name': K.SERIE_A,
-                     'n_prev_match':3
-                     }   
-    
-    data_params = {'window_size':200,
-                   'split_size':0.8,
-                   'test_size':0,
-                   'batch_size':32,
-                   'n_workers':0,
-                   'version':1,
-                   'normalize':True
-                   }
-    
-    input_data = extract_data_league(league_params)
-    dataloader, scalers, in_features = generate_dataset(input_data, data_params)
-    
-if __name__ == '__main__':
-    test_data()
-    
-    
     
     
     
