@@ -26,9 +26,10 @@ class Database_Manager():
         if(train):
             # LOADING TRAINING DATA --> ALL DATA SEASON
             league_path = f'{league_dir}{league_name}/{league_name}_npm={n_prev_match}.csv' if league_dir is not None else None
-
+            print(league_path)
             if(league_path is not None and exists(league_path)):
                 league_df = pd.read_csv(league_path, index_col=0)
+                logger.info('> Loading league data for training')
             else:
                 league_df = extract_training_data(league_name, n_prev_match)
 

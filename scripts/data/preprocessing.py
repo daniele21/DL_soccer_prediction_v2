@@ -307,7 +307,7 @@ def _split_teams(league_df, n_prev_match):
     home_team_df = pd.DataFrame()
     away_team_df = pd.DataFrame()
     
-    for i_row in range(len(data)):
+    for i_row in tqdm(range(len(data)), desc='Splitting teams'):
         home_team_dict = _split_teams_one_row(data, i_row, n_prev_match, home=True)
         away_team_dict = _split_teams_one_row(data, i_row, n_prev_match, home=False)
    
@@ -336,11 +336,17 @@ def data_preprocessing(league_df, params):
         prep_league_path = f'{league_dir}{league_name}/prep_{x}_{league_name}_npm={n_prev_match}.csv'
         if(league_dir is not None and exists(prep_league_path)):
             input_data[x] = pd.read_csv(prep_league_path, index_col=0)
+            logger.info(f'> Loading league data preprocessed: {x} data ')
 
-    if(len(input_data) != 2):
+    if(len(input_data) == 0):
         input_data = _split_teams(data, n_prev_match)
         home_data = input_data['home']
         away_data = input_data['away']
+
+        for x in ['home', 'away']:
+            prep_league_path = f'{league_dir}{league_name}/prep_{x}_{league_name}_npm={n_prev_match}.csv'
+            # input_data[x].to_csv(prep_league_path)
+            # logger.info(f'> Saving league data preprocessed: {x} data ')
 
     return input_data
 

@@ -3,7 +3,7 @@
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
+from scripts.utils.utils import consecutive_numbers
 
 def __categorical_encoding(series, pad_space=0):
     
@@ -103,9 +103,9 @@ class Feature_engineering_v1():
             data[col] = data[col].apply(_encoding, args=(self.res_encoder,))
 
 
-        assert data['f-opponent'].isnull().sum() <= 12, 'ERROR: Transform Feat.Eng V1 --> to many NaNs'
-
-        data = data.drop(data[data['f-opponent'].isnull()].index)
+        # assert data['f-opponent'].isnull().sum() <= 12, 'ERROR: Transform Feat.Eng V1 --> to many NaNs'
+        if(train):
+            data = data.drop(data[data['f-opponent'].isnull()].index)
 
         assert data.isnull().sum().sum() == 0, 'ERROR: Transform Feat.Eng V1 --> There are some NaNs'
 

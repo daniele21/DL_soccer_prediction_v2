@@ -26,9 +26,9 @@ class Training_Soccer_Dataset(Dataset):
 
     def __len__(self):
         if (self.train):
-            return len(self.x) - self.window_size
+            return len(self.x['home']) - self.window_size
         else:
-            return len(self.x)
+            return len(self.x['home'])
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -39,15 +39,37 @@ class Training_Soccer_Dataset(Dataset):
         else:
             start, end = idx, idx + 1
 
+        x_home = data_to_tensor(self.x['home'][start:end])
+        x_away = data_to_tensor(self.x['away'][start:end])
+
+        y_home = data_to_tensor(self.y['home'][start:end])
+        y_away = data_to_tensor(self.y['away'][start:end])
+
+        return x_home, x_away, y_home, y_away
+
+class Test_Soccer_Dataset(Dataset):
+
+    def __init__(self, x):
+
+        self.x = x
+
+        print(f'\t {self.x.shape}')
+
+    def _to_tensor(self, data):
+        return torch.Tensor(data.values)
+
+    def __len__(self):
+        return len(self.x)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        start, end = idx, idx + 1
+
         x = data_to_tensor(self.x[start:end])
-        y = data_to_tensor(self.y[start:end]) if self.y is not None else None
 
-        if (y is not None):
-            return x, y
-
-        else:
-            return x
-
+        return x
 
 class Soccer_Dataset(Dataset):
     
@@ -191,14 +213,9 @@ def create_training_dataloader(input_data, params):
 
 def create_test_dataloader(test_data):
 
-    test_dataset = {}
+    test_dataset = Test_Soccer_Dataset(test_data)
 
-    for s in ['home', 'away']:
-        x = test_data[s]
-        y = None
-
-        test_dataset[s] = Soccer_Dataset(x, train=False)
-    
+    print('   > Test Set:')
     test_dataloader = DataLoader(test_dataset,
                                  batch_size=1)
     
