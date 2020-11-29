@@ -162,8 +162,8 @@ def create_training_dataloader(input_data, params):
     
     train_size = int(split_size * len(input_data['home']))
     valid_size = (len(input_data['home']) - train_size)
-    valid_size = (2/3) * valid_size if test_set == True else valid_size
-    test_size = (1/3) * (len(input_data['home']) - train_size) if test_set == True else None
+    valid_size = int((2/3) * valid_size) if test_set == True else valid_size
+    test_size = int((1/3) * (len(input_data['home']) - train_size)) if test_set == True else None
     
     train_data, valid_data, test_data = {}, {}, {}
     
