@@ -60,6 +60,7 @@ class LSTM_FCN_Network(nn.Module):
 
         in_features = out_features * 2 if params['bidirectional'] else in_features
         kernel = int(params['kernel'])
+        padding = int(params['padding'])
         n_conv_layers = int(params['conv_layers'])
 
         self.conv_layers = nn.Sequential()
@@ -67,8 +68,9 @@ class LSTM_FCN_Network(nn.Module):
         for i_layer in range(n_conv_layers - 1):
             out_features = in_features // 2
             self.conv_layers.add_module(f'Conv-1d-{i_layer+1}', nn.Conv1d(in_features,
-                                                             out_features,
-                                                             kernel_size=kernel))
+                                                                          out_features,
+                                                                          kernel_size=kernel,
+                                                                          padding=padding))
             self.conv_layers.add_module(f'Relu-{i_layer}', nn.ReLU())
             in_features = out_features
 
