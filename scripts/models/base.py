@@ -9,6 +9,7 @@ import sys
 from scripts.visualization.plots import plot_loss
 from scripts.utils.utils import spent_time, logger
 from scripts.models.checkpoint import checkpoint
+from scripts.visualization.tensorboard import tb_update_loss, writer
 
 
 class Base_Model():
@@ -20,6 +21,7 @@ class Base_Model():
         self.model = network.to(self.device)
         self.trainloader = dataloader['train']
         self.evalloader = dataloader['eval']
+        self.testloader = dataloader['test'] if 'test' in list(dataloader.keys()) else None
         
         self.optimizer = params['optimizer'](self.model.parameters(),
                                              lr=params['lr'])
@@ -29,7 +31,10 @@ class Base_Model():
         self.losses = {'train':[],
                        'eval':[]}
 
+        # Visualization
+        self.plot_type = params['plot_type'] if 'plot_type' in list(params.keys()) else 'pyplot'
         self.plot_freq = params['plot_freq']
+
         self.seed = params['seed']
         
         self.save_dir = params['save_dir']
@@ -120,8 +125,15 @@ class Base_Model():
             print(f'> Evaluation Loss: {eval_loss:.5f}')
             print('')
 
-            # PLOTS
-            if(epoch != 0 and epoch % self.plot_freq == 0):    
+            # TENSORBOARD plot
+            if (self.plot_type == 'tb'):
+                tb_update_loss(train_loss, eval_loss, epoch)
+
+            # PYPLOT plot
+            if(epoch != 0 and
+               epoch % self.plot_freq == 0 and
+               self.plot_type == 'pyplot'):
+
                 plot_loss(self.losses['train'],
                           self.losses['eval'],
                           save=self.save,
@@ -146,13 +158,16 @@ class Base_Model():
                 break
                 
             self.epoch += 1
-            
+
+
         plot_loss(self.losses['train'],
                   self.losses['eval'],
                   save=self.save,
                   save_dir=f'{self.save_dir}/'
                   )
-        
+        if(self.plot_type == 'tb'):
+            writer.close()
+
         
 
     def predict(self, testloader, model_name=None):
