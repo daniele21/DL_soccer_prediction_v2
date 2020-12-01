@@ -18,7 +18,7 @@ class LSTM_Network(nn.Module):
                             num_layers = params['n_lstm_layer'],
                             bidirectional=params['bidirectional'])
             
-        in_features = in_features * 2 if params['bidirectional'] else in_features
+        in_features = out_features * 2 if params['bidirectional'] else in_features
         
         out_features = in_features // 2
         self.dense = nn.Linear(in_features, out_features)
@@ -36,7 +36,7 @@ class LSTM_Network(nn.Module):
         h_dense = self.dense_act(self.dense(h_lstm))
         
         out = self.fc_act(self.fc(h_dense))
-        out = out.squeeze()
+        # out = out.squeeze()
 
         return out
 
@@ -60,6 +60,7 @@ class LSTM_FCN_Network(nn.Module):
 
         in_features = out_features * 2 if params['bidirectional'] else in_features
         kernel = int(params['kernel'])
+        padding = int(params['padding'])
         n_conv_layers = int(params['conv_layers'])
 
         self.conv_layers = nn.Sequential()
@@ -67,8 +68,9 @@ class LSTM_FCN_Network(nn.Module):
         for i_layer in range(n_conv_layers - 1):
             out_features = in_features // 2
             self.conv_layers.add_module(f'Conv-1d-{i_layer+1}', nn.Conv1d(in_features,
-                                                             out_features,
-                                                             kernel_size=kernel))
+                                                                          out_features,
+                                                                          kernel_size=kernel,
+                                                                          padding=padding))
             self.conv_layers.add_module(f'Relu-{i_layer}', nn.ReLU())
             in_features = out_features
 
@@ -91,8 +93,6 @@ class LSTM_FCN_Network(nn.Module):
         return out
 
 
-
-
 class LSTM_Soccer_Network_v1(nn.Module):
     
     def __init__(self, in_features, params):
@@ -110,9 +110,9 @@ class LSTM_Soccer_Network_v1(nn.Module):
         
         output = torch.cat([out_home, out_away])
         
-        # out_home = out_home.squeeze()
-        # out_away = out_away.squeeze()
-        # output = output.squeeze()
+        out_home = out_home.squeeze()
+        out_away = out_away.squeeze()
+        output = output.squeeze()
         
         return output, out_home, out_away
 
