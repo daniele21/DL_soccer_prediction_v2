@@ -86,7 +86,7 @@ def extract_test_data(league_name, n_prev_match, test_size):
         season_df = extract_season_data(path, season_i, league_name)
         league_df = league_df.append(season_df, sort=False)
 
-    league_df = league_df.iloc[-test_size:]
+    league_df = league_df.iloc[-test_size:] if test_size is not None else league_df
     league_df = feature_engineering_league(league_df, n_prev_match)
 
     return league_df

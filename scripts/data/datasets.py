@@ -158,7 +158,7 @@ def create_training_dataloader(input_data, params):
     
     window = int(params['window_size'])
     split_size = float(params['split_size'])
-    test_set = bool(params['test_set']) if 'test_set' in list(params.keys()) else None
+    test_set = bool(params['test_set']) if 'test_set' in list(params.keys()) else False
     
     train_size = int(split_size * len(input_data['home']))
     valid_size = (len(input_data['home']) - train_size)
@@ -188,9 +188,6 @@ def create_training_dataloader(input_data, params):
     dataset = {'train':{},
                'eval':{}}
 
-    if(test_data is not None):
-        dataset['test'] = {}
-
     if(params['dataset'] == 'base'):
         dataset_fn = Training_Soccer_Dataset
         print('> Creating Soccer Dataset')
@@ -207,12 +204,6 @@ def create_training_dataloader(input_data, params):
                                  window_size=window,
                                  train=False)
 
-    if(test_data is not None):
-        print('  > Test Set:')
-        dataset['eval'] = dataset_fn(test_data,
-                                     window_size=window,
-                                     train=False)
-
 
     dataloader = {x:DataLoader(dataset     = dataset[x],
                                batch_size  = int(params['batch_size']),
@@ -221,6 +212,11 @@ def create_training_dataloader(input_data, params):
                                ) 
                                for x in ['train', 'eval']
                  }
+
+    print('  > Test Set:')
+    dataloader['test'] = {}
+    dataloader['test']['home'] = create_test_dataloader(test_data['home'])
+    dataloader['test']['away'] = create_test_dataloader(test_data['away'])
     
     in_features = len(dataset['train'].x['home'].columns)
     
