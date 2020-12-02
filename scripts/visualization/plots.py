@@ -50,6 +50,8 @@ def plot_hist(true, pred, params,
               plot='True'):
 
     thr = params['thr']
+    # opt_thr = params['opt_thr']
+    auc = params['auc']
     field = params['field']
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
 
@@ -65,9 +67,11 @@ def plot_hist(true, pred, params,
 
     _ = plt.hist(pred, bins=100, color='b', alpha=0.2, label=labels[0], density=True)
     _ = plt.hist(true, bins=100, color='r', alpha=0.2, label=labels[1], density=True)
+    # plt.axvline(x=opt_thr, c='r', linewidth=3, label=f'Opt Thr: {thr} | AUC: {auc}')
 
     if (thr is not None):
-        plt.axvline(x=thr, c='r', linewidth=3, label=f'Threshold: {thr}')
+        plt.axvline(x=thr, c='b', linewidth=2, label=f'My Thr: {thr} | AUC: {auc:.3f}')
+        # plt.axvline(x=thr, c='b', linewidth=2, label=f'My Thr: {thr}')
 
     plt.legend(loc='best')
 

@@ -365,8 +365,43 @@ def get_last_round(test_data):
     
     return last_round_df
     
-    
-    
+def fill_inference_matches(test_data, matches_dict):
+
+    home, away = matches_dict['home'], matches_dict['away']
+    odds_1x, odds_x2 = matches_dict['1X_odds'], matches_dict['X2_odds'],
+
+    home_matches = _fill_per_field(test_data, home, away, odds_1x, f_home=1)
+    away_matches = _fill_per_field(test_data, away, home, odds_x2, f_home=0)
+
+    matches = {}
+    for field in ['home', 'away']:
+        matches[field] = home_matches[field].append(away_matches[field])
+
+    return matches
+
+
+def _fill_per_field(test_data, field_teams, opponent_teams, odds, f_home):
+
+    matches = {'home': pd.DataFrame(),
+               'away': pd.DataFrame()}
+
+    for i, team in enumerate(field_teams):
+        for field in ['home', 'away']:
+            data = test_data[field]
+            team_df = data[data['team'] == team].iloc[-1:]
+
+            if(team_df['f-opponent'].isnull().values[0]):
+                idx = team_df.index
+                opponent = opponent_teams[i]
+                odd = odds[i]
+
+                data.loc[idx, 'f-opponent'] = opponent
+                data.loc[idx, 'f-home'] = f_home
+                data.loc[idx, 'f-bet-WD'] = odd
+
+                matches[field] = matches[field].append(data.loc[idx])
+
+    return matches
             
             
         

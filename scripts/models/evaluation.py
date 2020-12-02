@@ -37,16 +37,21 @@ def eval_inference(testloader, feat_eng, model, model_name=None):
 def evaluate_results(true, pred, eval_params, plot=True):
     thr = eval_params['thr']
 
-    pred_df = labeling_predictions(true, pred, thr)
+    pred_df = labeling_predictions(pred, thr, true)
 
-    my_choise = pred_df
-    right_choise = my_choise[my_choise.true == 1]
+    my_score = pred_df
+    right_score = my_score[my_score.true == 1]
     # bad_choise = my_choise[my_choise.true == 0]
 
+    my_score_to_bet = my_score[my_score['to_bet'] == True]
+    auc, opt_thr = compute_roc(my_score_to_bet['true'].to_list(),
+                               my_score_to_bet['pred'].to_list())
+    eval_params['auc'] = auc
+    eval_params['opt_thr'] = opt_thr
 
-    fig = plot_hist(right_choise['pred'], my_choise['pred'],
+    fig = plot_hist(right_score['pred'], my_score['pred'],
                     params=eval_params,
-                    labels=['my_choise', 'right_choise'],
+                    labels=['my_score', 'right_score'],
                     plot=plot)
     # plot_hist(my_choise['pred'], bad_choise['pred'], field=field, thr=thr, labels=['true', 'bad'])
 
@@ -111,43 +116,6 @@ def compute_roc(true_outcome, pred_outcome, info='', plot=False):
 
     return roc_auc, opt_threshold
 
-def test_prediction(testloader, model):
-    home_pred, home_true = [], []
-    away_pred, away_true = [], []
-    
-    
-    with torch.no_grad():
-        model.model.home_network.lstm.flatten_parameters()
-        model.model.away_network.lstm.flatten_parameters()
-        
-        for x_home, y_home, x_away, y_away in testloader:
-            
-            x_home = torch.Tensor(x_home).to(model.device)
-            x_away = torch.Tensor(x_away).to(model.device)
-            
-            y_home = torch.Tensor(y_home).to(model.device).squeeze()
-            y_away = torch.Tensor(y_away).to(model.device).squeeze()    
-            
-            _, home_out, away_out = model.model(x_home, x_away)
-            
-            if(testloader.batch_size > 1):
-                home_pred.extend(home_out.tolist())
-                away_pred.extend(away_out.tolist())
-                home_true.extend(y_home.tolist())
-                away_true.extend(y_away.tolist())
-            else:
-                home_pred.append(home_out.item())
-                away_pred.append(away_out.item())
-                home_true.append(y_home.item())
-                away_true.append(y_away.item())        
-                
-            pred = {'home':home_pred,
-                    'away':away_pred}
-            true = {'home':home_true,
-                    'away':away_true}
-            
-        return pred, true
-
 def _select_match_to_bet(test_data, params):
     '''
         SELECT JUST THE POSITIVE PREDICTIONS
@@ -202,76 +170,6 @@ def _select_match_to_bet(test_data, params):
     data['match'] = matches
     
     return data
-
-# def simulation(testloader, pred, true,
-#                feat_eng, params):
-#
-#     data = {'home':testloader.dataset.x_home[:len(pred['home'])],
-#             'away':testloader.dataset.x_away[:len(pred['away'])]}
-#
-#     sim_data = feat_eng.decoding(data, pred, true)
-#
-#     data = {}
-#     index = {}
-#
-#     n_matches = params['n_matches']
-#     combo = params['combo']
-#
-#     for x in ['home', 'away']:
-#
-#         data[x] = sim_data[x][:n_matches]
-#
-#         result = _select_match_to_bet(data[x], params)
-#
-#         data[x]['outcome'] = result['result_list']
-#         data[x]['roi'] = result['roi_list']
-#         data[x][f'combo_{combo}'] = result['cum_combo_list']
-#         data[x]['cum_gain'] = result['cum_gain_list']
-#
-#         index[x] = result['index']
-#
-#     return data, index
-
-# def test_evaluation(evalloader, model, params,
-#                     threshold=None, n_matches=None,
-#                     save=True):
-#
-#     pred, true = test_prediction(evalloader, model)
-#
-#     if(n_matches is not None):
-#         pred = {'home':pred['home'][:n_matches],
-#                 'away':pred['away'][:n_matches]}
-#
-#         true = {'home':true['home'][:n_matches],
-#                 'away':true['away'][:n_matches]}
-#
-#     if(threshold is None):
-#         for x in ['home', 'away']:
-#             evaluate_roc(true[x], pred[x], info=x, plot=True)
-#
-#     else:
-#         tpr = {}
-#         n_pos = {}
-#         pred_thr = {}
-#
-#         for x in ['home', 'away']:
-#             _plot_hist(true[x], pred[x],
-#                        threshold, x.upper(),
-#                        save_folder=save)
-#
-#             pred_thr[x] = [1 if x >= threshold else 0 for x in pred[x]]
-#             tpr_x, n_pos_x = _true_positive_rate(true[x],
-#                                                  pred_thr[x],
-#                                                  threshold)
-#             tpr[x] = tpr_x
-#             n_pos[x] = n_pos_x
-#
-#             print(f'> {x.upper()} TPR: {tpr[x]:.2f} over {n_pos[x]}/{len(pred["home"])} matches ({n_pos[x]/len(pred["home"]):.3f})')
-#
-#         tot_matches = len(pred['home'])
-#         save_evaluation(tpr, n_pos, tot_matches, threshold, params)
-#
-#         return pred_thr, true
 
 def computing_test_outcome(testloader, feat_eng, pred, params):
     

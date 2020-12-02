@@ -106,6 +106,8 @@ class Feature_engineering_v1():
         # assert data['f-opponent'].isnull().sum() <= 12, 'ERROR: Transform Feat.Eng V1 --> to many NaNs'
         if(train):
             data = data.drop(data[data['f-opponent'].isnull()].index)
+        else:
+            data = data.drop(data[data['f-opponent'].isnull()].index)
 
         assert data.isnull().sum().sum() == 0, 'ERROR: Transform Feat.Eng V1 --> There are some NaNs'
 

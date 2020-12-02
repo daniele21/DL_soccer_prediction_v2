@@ -1,37 +1,42 @@
 from flask import Flask, make_response, jsonify, request, render_template
 
 from api.v1.checker import check_league
-from api.v1.utils import show_plot
+from api.v1.utils import show_plot, load_models
 import scripts.data.constants as K
 
 import pandas as pd
 
 from scripts.data.postprocessing import postprocessing_test_data
+from scripts.data.preprocessing import fill_inference_matches
 from scripts.models.evaluation import evaluate_results, simulation
-from scripts.models.model_inference import generate_test_data, model_inference
-from scripts.utils.loading import load_configs
+from scripts.models.model_inference import generate_test_data, model_inference, generate_output
+
+# from scripts.utils.loading import load_configs
 
 app = Flask(__name__, template_folder="templates/")
+model, config = load_models('serie_a')
+
 
 @app.route('/')
 def homepage():
     return render_template('index.html')
 
+
 @app.route('/api/v1/read/league', methods=['GET'])
 def get_league_names():
-    return make_response(jsonify({'league_name':K.LEAGUE_NAMES}))
+    return make_response(jsonify({'league_name': K.LEAGUE_NAMES}))
 
 
 @app.route('/api/v1/read/<league_name>/team', methods=['GET'])
 def get_teams(league_name):
 
     outcome, msg = check_league(league_name)
-    if(outcome == False):
+    if not outcome:
         response = make_response(msg, 404)
     else:
         teams = sorted(K.TEAMS_LEAGUE[str(league_name).lower()])
-        response = make_response(jsonify({'league':league_name,
-                                          'teams':teams}))
+        response = make_response(jsonify({'league': league_name,
+                                          'teams': teams}))
 
     return response
 
@@ -41,36 +46,35 @@ def predict(league_name):
     print(league_name)
 
     outcome, msg = check_league(league_name)
-    if(outcome == False):
+    if not outcome:
         response = make_response(msg, 404)
 
     else:
         matches = request.json
-
-        home_teams, away_teams = matches['home_teams'], matches['away_teams']
-        odd_1X, odd_X2 = matches['1X_odds'], matches['X2_odds']
-        round = matches['round']
-
-        test_df = pd.DataFrame({'round':round,
-                                'home':home_teams,
-                                '1X_odd':odd_1X,
-                                'away':away_teams,
-                                'X2_odd':odd_X2})
-
-        matches_list = [f'{home_teams[i]} - {away_teams[i]}'for i in range(len(home_teams))]
+        thr = matches['thr'] if 'thr' in list(matches.keys()) else None
 
         # CALL THE MODEL FOR PREDICTION
-        #------------------------------------
-        outcome = {'1X': [matches_list[:2]],
-                  'X2': [matches_list[2:4]]}
+        # model, config = models[league_name], configs[league_name]
 
-        response = make_response(jsonify({"League": league_name,
-                                          "round":round,
-                                          "outcome": outcome}), 200)
+        league_params = config['league']
+        feat_eng = config['feat_eng']
 
-        #
-        # response = make_response(jsonify({"League": league_name,
-        #                                   "Matches": matches}), 200)
+        test_data = generate_test_data(league_params)
+
+        matches_df = fill_inference_matches(test_data, matches)
+
+        predictions = {}
+        for field in ['home', 'away']:
+            pred, _ = model_inference(matches_df[field],
+                                      feat_eng,
+                                      model,
+                                      model_name=field,
+                                      train=False)
+            predictions[field] = pred
+
+        outcome_dict = generate_output(matches_df, predictions, thr)
+
+        response = make_response(jsonify(outcome_dict), 200)
 
     return response
 
@@ -128,7 +132,8 @@ def inference(league_name):
     else:
         league_name = str(league_name).lower()
         params['league_name'] = league_name
-        model, configs = load_configs(league_name)
+        # model, configs = load_configs(league_name)
+        # model, config = models[league_name], configs[league_name]
 
         if (model.testloader is not None):
             test_size = len(model.testloader[field])
@@ -137,7 +142,7 @@ def inference(league_name):
 
         test_data = generate_test_data(league_name)
 
-        feat_eng = configs['feat_eng']
+        feat_eng = config['feat_eng']
 
         testset = test_data[field][-test_size:]
         testset = testset[testset['f-opponent'].isnull() == False]
