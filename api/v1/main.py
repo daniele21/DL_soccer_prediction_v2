@@ -8,10 +8,15 @@ import pandas as pd
 
 from scripts.data.postprocessing import postprocessing_test_data
 from scripts.data.preprocessing import fill_inference_matches
-from scripts.models.evaluation import evaluate_results, simulation
+from scripts.models.evaluation import evaluate_results, thr_analysis
 from scripts.models.model_inference import generate_test_data, model_inference, generate_output
 
 # from scripts.utils.loading import load_configs
+from scripts.models.strategy import simulation
+from scripts.visualization.summary import show_summary
+
+THR_DEFAULT_LIST = [0.5, 0.55, 0.6, 0.65, 0.7, 0.725, 0.75, 0.775, 0.8, 0.825, 0.85, 0.875, 0.9]
+
 
 app = Flask(__name__, template_folder="templates/")
 model, config = load_models('serie_a')
@@ -91,10 +96,32 @@ def show_evaluation(league_name):
 
     else:
         testset, pred, true = inference(league_name)
-        pred_df, fig = evaluate_results(true, pred, params, plot=False)
+        pred_df, outcome, fig = evaluate_results(true, pred, params, plot=False)
         response = show_plot(fig)
 
     return response
+
+@app.route('/api/v1/show/<league_name>/thr_analysis', methods=['POST'])
+def show_evaluation(league_name):
+
+    params = request.json  # requested params : [thr, field, thr_list]
+    params['save_dir'] = 'api/v1/templates/static/'
+    field = params['field']
+    thr_list = params['thr_list'] if 'thr_list' in list(params.keys()) else THR_DEFAULT_LIST
+
+    outcome, msg = check_league(league_name)
+    if (outcome == False):
+        response = make_response(msg, 404)
+
+    else:
+        testset, pred, true = inference(league_name)
+        pred_df, outcome, _ = evaluate_results(true, pred, params, plot=False)
+        analysis_df = thr_analysis(true, pred, thr_list, params['save_dir'])
+
+        response = make_response(analysis_df.transpose().to_dict(), 200)
+
+    return response
+
 
 @app.route('/api/v1/show/<league_name>/simulation', methods=['POST'])
 def show_simulation(league_name):
@@ -102,6 +129,7 @@ def show_simulation(league_name):
     params = request.json  # requested params : [thr, field, filter_bet, money_bet, n_matches, combo]
     params['save_dir'] = 'api/v1/templates/static/'
     field = params['field']
+    thr_list = params['thr_list'] if 'thr_list' in list(params.keys()) else THR_DEFAULT_LIST
 
     outcome, msg = check_league(league_name)
     if (outcome == False):
@@ -111,8 +139,11 @@ def show_simulation(league_name):
         testset, pred, true = inference(league_name)
 
         pred_df, _ = evaluate_results(true, pred, params, plot=False)
+        analysis_df = thr_analysis(true, pred, thr_list, params['save_dir'])
         data_result = postprocessing_test_data(testset, pred_df)
         summary, sim_result, fig = simulation(data_result, params, plot=False)
+
+        show_summary(summary)
 
         response = show_plot(fig)
 

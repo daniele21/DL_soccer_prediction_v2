@@ -13,18 +13,17 @@ def _json_item_to_str(json_params):
     return json_str
 
 
-def save_simulation_details(field, string, folder_dir):
-    filename = f'5.simulations_details_{field}.txt'
-    # filepath = f'{os.environ["CKP_MODEL_PATH"]}{os.environ["MODEL_NAME"]}/{filename}'
+def save_simulation_details(sim_result, params, folder_dir):
+    field = params['field']
+    thr = params['thr']
+    filter_bet = params['filter_bet']
+
+    # filename = f'5.simulations_details_{field}.txt'
+    filename = f'5.simulations_details_{field}_thr={thr}_filter={filter_bet}.json'
     filepath = f'{folder_dir}/{filename}'
 
-    content = f'\n\n> Simulation \n'
-    content += string
-
     logger.info(f' > Saving training details at {filepath}')
-    with open(filepath, 'a') as f:
-        f.write(content)
-        f.close()
+    save_json(sim_result, filepath)
 
     return
 
@@ -104,6 +103,8 @@ def save_training_details(model):
     save_params(training_details, filepath, format='json')
 
     logger.info(f' > Saving training details at {filepath}')
+
+    print(training_details)
 
     return
 

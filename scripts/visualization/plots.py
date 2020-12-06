@@ -44,14 +44,15 @@ def plot_aic_bic(aics, bics, figsize=(7,7),
     plt.show()
 
 
-def plot_hist(true, pred, params,
+def plot_hist(true, pred, params, outcome,
               labels=['True_Outcome',
                       'Pred_Outcome'],
               plot='True'):
 
-    thr = params['thr']
-    # opt_thr = params['opt_thr']
-    auc = params['auc']
+    thr = outcome['thr']
+    opt_thr = outcome['opt_thr']
+    tpr = outcome['tpr']
+    auc = outcome['auc']
     field = params['field']
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
 
@@ -70,12 +71,12 @@ def plot_hist(true, pred, params,
     # plt.axvline(x=opt_thr, c='r', linewidth=3, label=f'Opt Thr: {thr} | AUC: {auc}')
 
     if (thr is not None):
-        plt.axvline(x=thr, c='b', linewidth=2, label=f'My Thr: {thr} | AUC: {auc:.3f}')
+        plt.axvline(x=thr, c='b', linewidth=2, label=f'My Thr: {thr} | AUC: {auc:.3f} | opt thr: {opt_thr:.3f} | tpr: {tpr:.3f}')
         # plt.axvline(x=thr, c='b', linewidth=2, label=f'My Thr: {thr}')
 
-    plt.legend(loc='best')
+    plt.legend(loc='best', fontsize=7)
 
-    if(save_dir):
+    if(save_dir and plot):
         filename = f'{title}_thr={thr}.png'
         filepath = f'{save_dir}{filename}'
         plt.savefig(filepath)
@@ -83,6 +84,9 @@ def plot_hist(true, pred, params,
 
     if(plot):
         plt.show()
+    else:
+        plt.close(fig)
+
 
     return fig
 
@@ -90,15 +94,30 @@ def plot_simulation(simulation_result, params, plot=True):
 
     # filter_bet = params['filter_bet']
     # money_bet = params['money_bet']
-    n_combo = int(params['combo'])
+    combo_dict = {}
+    cols = simulation_result.columns
+
+    i = 2
+    for col in cols:
+        if('combo' in col):
+            combo = simulation_result[col].cumsum()\
+                            .fillna(method='bfill')\
+                            .fillna(method='ffill').to_list()
+            combo_dict[i] = combo
+            i += 1
+
     field = str(params['field'])
+    filter_bet = params['filter_bet']
+    thr = params['thr']
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
+
+    title = f'{field.upper()}_thr={thr}_filter={filter_bet}'
 
     data = simulation_result
     cum_gain_list = data[data['cum_gain']!=0]['cum_gain'].to_list()
 
-    combo = data[f'combo_{n_combo}'].cumsum().fillna(method='bfill')
-    combo = combo.fillna(method='ffill').to_list()
+    # combo = data[f'combo_{n_combo}'].cumsum().fillna(method='bfill')
+    # combo = combo.fillna(method='ffill').to_list()
 
     labels = simulation_result['match'].to_list()
     idxs = range(len(labels))
@@ -106,23 +125,49 @@ def plot_simulation(simulation_result, params, plot=True):
     # PLOTTING
 
     fig = plt.figure(figsize=(17,7))
-    plt.title(field.upper())
+    plt.title(title)
 
     plt.plot(idxs, cum_gain_list, label='no combo')
     plt.fill_between(idxs, cum_gain_list, alpha=0.3)
-    plt.plot(idxs, combo, c='green', label=f'combo_{n_combo}')
+
+    for combo_key in combo_dict:
+        combo = combo_dict[combo_key]
+        plt.plot(idxs, combo, label=f'combo x{combo_key}')
 
     plt.xticks(idxs, labels=labels, rotation=90)
     plt.legend()
     plt.grid()
     plt.tight_layout()
 
-    if(save_dir is not None):
+    if(save_dir is not None and plot):
         filename = f'5.simulations_plot_{field}.png'
         filepath = f'{save_dir}/{filename}'
         plt.savefig(filepath)
 
     if(plot):
         plt.show()
+    else:
+        plt.close(fig)
 
     return fig
+
+def plot_thr_analysis(thr_analysis_df):
+    for col in thr_analysis_df:
+        thr_analysis_df[col] = thr_analysis_df[col].astype(float)
+
+    thr_analysis_df = thr_analysis_df.dropna()
+
+    thr_list = thr_analysis_df['thr'].to_list()
+    support_list = thr_analysis_df['support'].to_list()
+    tpr_list = thr_analysis_df['tpr'].to_list()
+
+    plt.plot(thr_list, tpr_list, c='green', label='TPR')
+    plt.scatter(x=thr_list, y=tpr_list, c='green')
+    plt.plot(thr_list, support_list, c='b', label='Support')
+    plt.scatter(x=thr_list, y=support_list, c='b')
+    plt.grid()
+    plt.xlabel('Thr')
+    plt.ylim(0,1)
+
+    plt.legend()
+    plt.show()
