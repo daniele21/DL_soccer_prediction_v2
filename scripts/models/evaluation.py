@@ -16,6 +16,7 @@ from scipy.stats import cumfreq
 from matplotlib import pyplot as plt
 import pandas as pd
 
+from core.file_manager.saving import save_json
 from scripts.data.postprocessing import labeling_predictions
 from scripts.models.model_utils import save_evaluation
 from scripts.utils.saving import save_simulation_details
@@ -34,74 +35,65 @@ def eval_inference(testloader, feat_eng, model, model_name=None):
 
     return pred_outcome, true_outcome
 
+def thr_analysis(true, pred, thr_list=None, save_dir=None):
+    assert thr_list is not None and isinstance(thr_list, list)
+
+    output_thr = {}
+
+    for thr in thr_list:
+        pred_df = labeling_predictions(pred, thr, true)
+        filtered_pred = pred_df[pred_df['to_bet'] == True]
+
+        tpr = f"{(filtered_pred['true']==1).sum() / len(filtered_pred['pred']):.3f}"
+        support = f"{len(filtered_pred['pred']) / len(pred_df):.2f}"
+
+        output_thr[str(thr)] = {'support': float(support),
+                                'tpr': float(tpr)}
+
+    thr_result = pd.DataFrame(output_thr).transpose()
+
+    thr_dict = thr_result.transpose().to_dict()
+    thr_result = thr_result.reset_index().rename(columns={'index':'thr'})
+
+    if(save_dir is not None):
+        filepath = f'{save_dir}6.thr_analysis.json'
+        save_json(thr_dict, filepath)
+
+    return thr_result, thr_dict
+
+
 def evaluate_results(true, pred, eval_params, plot=True):
     thr = eval_params['thr']
 
-    pred_df = labeling_predictions(true, pred, thr)
+    pred_df = labeling_predictions(pred, thr, true)
 
-    my_choise = pred_df
-    right_choise = my_choise[my_choise.true == 1]
+    my_score = pred_df
+    right_score = my_score[my_score.true == 1]
     # bad_choise = my_choise[my_choise.true == 0]
 
+    my_score_to_bet = my_score[my_score['to_bet'] == True]
+    auc, opt_thr = compute_roc(pred_df['true'].to_list(),
+                               pred_df['pred'].to_list())
 
-    fig = plot_hist(right_choise['pred'], my_choise['pred'],
+    try:
+        tpr = (my_score_to_bet['true'] == 1).sum() / (len(my_score_to_bet['pred']))
+    except:
+        tpr = 'nan'
+
+    outcome = {'thr':thr,
+               'auc':auc,
+               'opt_thr':opt_thr,
+               'tpr':tpr}
+
+    fig = plot_hist(right_score['pred'], my_score['pred'],
                     params=eval_params,
-                    labels=['my_choise', 'right_choise'],
+                    outcome=outcome,
+                    labels=['match_prob', 'win_match'],
                     plot=plot)
-    # plot_hist(my_choise['pred'], bad_choise['pred'], field=field, thr=thr, labels=['true', 'bad'])
 
-    return pred_df, fig
+    return pred_df, outcome, fig
 
 
-def summarize_sim_result(sim_result, params):
-
-    filter_bet = params['filter_bet']
-    money_bet = params['money_bet']
-    n_combo = int(params['combo'])
-    field = str(params['field'])
-    save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
-
-    cum_gain_list = sim_result[sim_result['cum_gain'] != 0]['cum_gain'].to_list()
-    combo = sim_result[f'combo_{n_combo}'].cumsum().fillna(method='bfill')
-    combo = combo.fillna(method='ffill').to_list()
-
-    win_bets = len(sim_result[sim_result.roi > 0])
-    loss_bets = len(sim_result[sim_result.roi < 0])
-
-    perc_gain = cum_gain_list[-1] / (len(cum_gain_list) * money_bet)
-    perc_combo = combo[-1]/(len(combo * money_bet))
-
-    result_str = ''
-    result_str += f'> Threshold bet:       {filter_bet}\n'
-    result_str += f'> Matches bet:         {len(cum_gain_list) * money_bet}\n'
-    result_str += f'> Money per match:     {money_bet} €\n'
-    result_str += f'> Win/Loss bet:        {win_bets}/{loss_bets} \n'
-    result_str += f'> Net Gain:            {cum_gain_list[-1]:.2f} ({perc_gain*100:.0f} %)\n'
-    result_str += f'> Combo x{n_combo}:            {combo[-1]:.2f} ({perc_combo*100:.0f} %)\n'
-
-    print(result_str)
-
-    if(save_dir is not None):
-        save_simulation_details(field, result_str, save_dir)
-
-    return result_str
-
-def simulation(test_result, params, plot=False):
-
-    n_matches = params['n_matches']
-    combo = params['combo']
-    field = params['field']
-    save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
-
-    data = test_result.iloc[:n_matches]
-
-    sim_result = _select_match_to_bet(data, params)
-
-    summary = summarize_sim_result(sim_result, params)
-
-    fig = plot_simulation(sim_result, params, plot)
-
-    return summary, data, fig
 
 
 def compute_roc(true_outcome, pred_outcome, info='', plot=False):
@@ -111,51 +103,14 @@ def compute_roc(true_outcome, pred_outcome, info='', plot=False):
 
     return roc_auc, opt_threshold
 
-def test_prediction(testloader, model):
-    home_pred, home_true = [], []
-    away_pred, away_true = [], []
-    
-    
-    with torch.no_grad():
-        model.model.home_network.lstm.flatten_parameters()
-        model.model.away_network.lstm.flatten_parameters()
-        
-        for x_home, y_home, x_away, y_away in testloader:
-            
-            x_home = torch.Tensor(x_home).to(model.device)
-            x_away = torch.Tensor(x_away).to(model.device)
-            
-            y_home = torch.Tensor(y_home).to(model.device).squeeze()
-            y_away = torch.Tensor(y_away).to(model.device).squeeze()    
-            
-            _, home_out, away_out = model.model(x_home, x_away)
-            
-            if(testloader.batch_size > 1):
-                home_pred.extend(home_out.tolist())
-                away_pred.extend(away_out.tolist())
-                home_true.extend(y_home.tolist())
-                away_true.extend(y_away.tolist())
-            else:
-                home_pred.append(home_out.item())
-                away_pred.append(away_out.item())
-                home_true.append(y_home.item())
-                away_true.append(y_away.item())        
-                
-            pred = {'home':home_pred,
-                    'away':away_pred}
-            true = {'home':home_true,
-                    'away':away_true}
-            
-        return pred, true
-
-def _select_match_to_bet(test_data, params):
+def _select_match_to_bet(test_data, params, combo=None):
     '''
         SELECT JUST THE POSITIVE PREDICTIONS
     '''
 
     filter_bet = params['filter_bet']
     money_bet = params['money_bet']
-    n_combo = params['combo']
+    n_combo = combo if combo is not None else 3
 
     matches = []
     roi_list = []
@@ -197,81 +152,11 @@ def _select_match_to_bet(test_data, params):
 
     data['outcome'] = result_list
     data['roi'] = roi_list
-    data[f'combo_{n_combo}'] = combo_list
+    # data[f'combo_{n_combo}'] = combo_list
     data['cum_gain'] = cum_gain_list
     data['match'] = matches
     
-    return data
-
-# def simulation(testloader, pred, true,
-#                feat_eng, params):
-#
-#     data = {'home':testloader.dataset.x_home[:len(pred['home'])],
-#             'away':testloader.dataset.x_away[:len(pred['away'])]}
-#
-#     sim_data = feat_eng.decoding(data, pred, true)
-#
-#     data = {}
-#     index = {}
-#
-#     n_matches = params['n_matches']
-#     combo = params['combo']
-#
-#     for x in ['home', 'away']:
-#
-#         data[x] = sim_data[x][:n_matches]
-#
-#         result = _select_match_to_bet(data[x], params)
-#
-#         data[x]['outcome'] = result['result_list']
-#         data[x]['roi'] = result['roi_list']
-#         data[x][f'combo_{combo}'] = result['cum_combo_list']
-#         data[x]['cum_gain'] = result['cum_gain_list']
-#
-#         index[x] = result['index']
-#
-#     return data, index
-
-# def test_evaluation(evalloader, model, params,
-#                     threshold=None, n_matches=None,
-#                     save=True):
-#
-#     pred, true = test_prediction(evalloader, model)
-#
-#     if(n_matches is not None):
-#         pred = {'home':pred['home'][:n_matches],
-#                 'away':pred['away'][:n_matches]}
-#
-#         true = {'home':true['home'][:n_matches],
-#                 'away':true['away'][:n_matches]}
-#
-#     if(threshold is None):
-#         for x in ['home', 'away']:
-#             evaluate_roc(true[x], pred[x], info=x, plot=True)
-#
-#     else:
-#         tpr = {}
-#         n_pos = {}
-#         pred_thr = {}
-#
-#         for x in ['home', 'away']:
-#             _plot_hist(true[x], pred[x],
-#                        threshold, x.upper(),
-#                        save_folder=save)
-#
-#             pred_thr[x] = [1 if x >= threshold else 0 for x in pred[x]]
-#             tpr_x, n_pos_x = _true_positive_rate(true[x],
-#                                                  pred_thr[x],
-#                                                  threshold)
-#             tpr[x] = tpr_x
-#             n_pos[x] = n_pos_x
-#
-#             print(f'> {x.upper()} TPR: {tpr[x]:.2f} over {n_pos[x]}/{len(pred["home"])} matches ({n_pos[x]/len(pred["home"]):.3f})')
-#
-#         tot_matches = len(pred['home'])
-#         save_evaluation(tpr, n_pos, tot_matches, threshold, params)
-#
-#         return pred_thr, true
+    return data, combo_list
 
 def computing_test_outcome(testloader, feat_eng, pred, params):
     
@@ -347,10 +232,10 @@ def evaluate_roc(labels, scores, info='', plot=False):
         fig.tight_layout()        
         plt.show()
             
-    print('> {}'.format(info.upper()))
-    print('> AUC       :\t{:.3f}'.format(roc_auc))
-    print('> EER       :\t{:.3f}'.format(eer))
-    print('> Threshold :\t{:.5f}\n'.format(opt_threshold))
+        # print('> {}'.format(info.upper()))
+        print('> AUC       :\t{:.3f}'.format(roc_auc))
+        print('> EER       :\t{:.3f}'.format(eer))
+        print('> Threshold :\t{:.5f}\n'.format(opt_threshold))
 
     return roc_auc, opt_threshold
 

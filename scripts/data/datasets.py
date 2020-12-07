@@ -159,12 +159,18 @@ def create_training_dataloader(input_data, params):
     window = int(params['window_size'])
     split_size = float(params['split_size'])
     test_set = bool(params['test_set']) if 'test_set' in list(params.keys()) else False
-    
+    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else None
+
     train_size = int(split_size * len(input_data['home']))
     valid_size = (len(input_data['home']) - train_size)
-    valid_size = int((2/3) * valid_size) if test_set == True else valid_size
-    test_size = int((1/3) * (len(input_data['home']) - train_size)) if test_set == True else None
-    
+
+    if(test_size is None):
+        valid_size = int((2/3) * valid_size) if test_set == True else valid_size
+        test_size = int((1/3) * (len(input_data['home']) - train_size)) if test_set == True else None
+    else:
+        valid_size = valid_size - test_size
+
+
     train_data, valid_data, test_data = {}, {}, {}
     
     train_data['home'] = input_data['home'].iloc[: train_size]
@@ -223,7 +229,7 @@ def create_training_dataloader(input_data, params):
     return dataloader, in_features
 
 def create_test_dataloader(test_data):
-    print('   > Test Set:')
+    # print('   > Test Set:')
     test_dataset = Test_Soccer_Dataset(test_data)
 
     test_dataloader = DataLoader(test_dataset,

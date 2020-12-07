@@ -149,7 +149,9 @@ def feature_engineering_league(league_df, n_prev_match):
                            'HomeTeam', 'AwayTeam', 'home_goals',
                            'away_goals', 'result_1X2',
                            'bet_1', 'bet_X', 'bet_2']]
-    
+
+    league_df = league_df.dropna()
+
     league_df = league_df.reset_index(drop=True)
 
 
@@ -322,34 +324,54 @@ def data_preprocessing(league_df, params):
 
     n_prev_match = int(params['n_prev_match'])
     train = bool(params['train'])
-    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else None
+    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else 100
     league_dir = params['league_dir'] if 'league_dir' in list(params.keys()) else None
     league_name = params['league_name']
+    update = params['update'] if 'update' in list(params.keys()) else False
 
     data = league_df.copy(deep=True)
 
-    if(train == False):
-        data = data.iloc[-test_size:] if test_size is not None else data
-
     input_data = {}
-    for x in ['home', 'away']:
-        prep_league_path = f'{league_dir}{league_name}/prep_{x}_{league_name}_npm={n_prev_match}.csv'
-        if(league_dir is not None and exists(prep_league_path)):
-            input_data[x] = pd.read_csv(prep_league_path, index_col=0)
-            logger.info(f'> Loading league data preprocessed: {x} data ')
+    prep_league_path = {x: f'{league_dir}{league_name}/prep_{x}_{league_name}_npm={n_prev_match}.csv' for x in ['home', 'away']}
+    if (league_dir is not None and
+            exists(prep_league_path['home']) and
+            exists(prep_league_path['away'])):
+
+        for x in ['home', 'away']:
+            input_data[x] = pd.read_csv(prep_league_path[x], index_col=0)
+
+        input_data = update_input_data(data, input_data, n_prev_match) if update else input_data
 
     if(len(input_data) == 0):
         input_data = _split_teams(data, n_prev_match)
-        home_data = input_data['home']
-        away_data = input_data['away']
 
-        for x in ['home', 'away']:
-            prep_league_path = f'{league_dir}{league_name}/prep_{x}_{league_name}_npm={n_prev_match}.csv'
-            # input_data[x].to_csv(prep_league_path)
-            # logger.info(f'> Saving league data preprocessed: {x} data ')
+    if(train):
+        input_data['home'].to_csv(prep_league_path['home'])
+        input_data['away'].to_csv(prep_league_path['away'])
+    else:
+        input_data['home'] = input_data['home'].iloc[-test_size:]
+        input_data['away'] = input_data['away'].iloc[-test_size:]
 
     return input_data
 
+def update_input_data(league_df, input_data, n_prev_match):
+    logger.info(f'> Updating league data preprocessed: data ')
+    last_date = pd.to_datetime(league_df.iloc[-1]['Date'])
+
+    date_home = pd.to_datetime(input_data['home'].iloc[-1]['date'])
+    date_away = pd.to_datetime(input_data['away'].iloc[-1]['date'])
+
+    assert date_home == date_away
+    date = date_home
+
+    if(date < last_date):
+        data = league_df[league_df['Date'] > date]
+        update_data = _split_teams(data, n_prev_match)
+
+        input_data['home'] = input_data['home'].append(update_data['home']).reset_index(drop=True)
+        input_data['away'] = input_data['away'].append(update_data['away']).reset_index(drop=True)
+
+    return input_data
 
 def get_last_round(test_data):
     
@@ -365,8 +387,43 @@ def get_last_round(test_data):
     
     return last_round_df
     
-    
-    
+def fill_inference_matches(test_data, matches_dict):
+
+    home, away = matches_dict['home'], matches_dict['away']
+    odds_1x, odds_x2 = matches_dict['1X_odds'], matches_dict['X2_odds'],
+
+    home_matches = _fill_per_field(test_data, home, away, odds_1x, f_home=1)
+    away_matches = _fill_per_field(test_data, away, home, odds_x2, f_home=0)
+
+    matches = {}
+    for field in ['home', 'away']:
+        matches[field] = home_matches[field].append(away_matches[field])
+
+    return matches
+
+
+def _fill_per_field(test_data, field_teams, opponent_teams, odds, f_home):
+
+    matches = {'home': pd.DataFrame(),
+               'away': pd.DataFrame()}
+
+    for i, team in enumerate(field_teams):
+        for field in ['home', 'away']:
+            data = test_data[field]
+            team_df = data[data['team'] == team].iloc[-1:]
+
+            if(team_df['f-opponent'].isnull().values[0]):
+                idx = team_df.index
+                opponent = opponent_teams[i]
+                odd = odds[i]
+
+                data.loc[idx, 'f-opponent'] = opponent
+                data.loc[idx, 'f-home'] = f_home
+                data.loc[idx, 'f-bet-WD'] = odd
+
+                matches[field] = matches[field].append(data.loc[idx])
+
+    return matches
             
             
         

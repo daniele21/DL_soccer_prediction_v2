@@ -211,6 +211,30 @@ FEAT_ENG = {SERIE_A: f'{MODEL_DIR}{SERIE_A}/{SERIE_A_MODEL_NAME}/feat_eng',
             JUPILIER: f'{MODEL_DIR}{PREMIER_MODEL_NAME}/feat_eng_object'}
 #%%
 
+def load_model_paths(league_name, model_version, model_name):
+    league_name = league_name.lower()
+    league = league_name if league_name in LEAGUE_NAMES else None
+    model_version = 'network_v1' if model_version==1 else 'network_v2' if model_version==2 else None
+
+    if league is not None and model_version is not None:
+        folder_dir = f'{MODEL_DIR}{model_version}/{league}/{model_name}/'
+        model_path = f'{folder_dir}{model_name}.pth'
+        league_params_path = f'{folder_dir}1.league_params.json'
+        data_params_path = f'{folder_dir}2.data_params.json'
+        model_params_path = f'{folder_dir}3.model_params.json'
+        feat_eng_path = f'{folder_dir}feat_eng'
+
+        paths = {'model': model_path,
+                 'model_params':model_params_path,
+                 'league_params':league_params_path,
+                 'data_params':data_params_path,
+                 'feat_eng':feat_eng_path}
+
+        return paths
+
+    else:
+        raise ValueError('LOAD MDOEL PATHS: Wrong League Name provided')
+
 def get_league_csv_paths(league_name):
     
     if(league_name == SERIE_A):
