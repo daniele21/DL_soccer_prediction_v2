@@ -140,7 +140,7 @@ def plot_simulation(simulation_result, params, plot=True):
     plt.tight_layout()
 
     if(save_dir is not None and plot):
-        filename = f'5.simulations_plot_{field}.png'
+        filename = f'5.simulations_plot_{field}_thr={thr}_filter={filter_bet}.png'
         filepath = f'{save_dir}/{filename}'
         plt.savefig(filepath)
 
