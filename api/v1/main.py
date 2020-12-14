@@ -1,11 +1,13 @@
 from flask import Flask, make_response, jsonify, request, render_template
 
-from api.v1.checker import check_league
+from api.v1.checker import check_league, check_data_league
 from api.v1.utils import show_plot, load_models
 import scripts.data.constants as K
+from core.logger.logging import logger
 
 import pandas as pd
 
+from scripts.data.data_process import update_data_league
 from scripts.data.postprocessing import postprocessing_test_data
 from scripts.data.preprocessing import fill_inference_matches
 from scripts.models.evaluation import evaluate_results, thr_analysis
@@ -17,10 +19,9 @@ from scripts.visualization.summary import show_summary
 
 THR_DEFAULT_LIST = [0.5, 0.55, 0.6, 0.65, 0.7, 0.725, 0.75, 0.775, 0.8, 0.825, 0.85, 0.875, 0.9]
 
-
 app = Flask(__name__, template_folder="templates/")
-model, config = load_models('serie_a')
-
+# model, config = load_models('serie_a')
+model, config = None, None
 
 @app.route('/')
 def homepage():
@@ -42,6 +43,42 @@ def get_teams(league_name):
         teams = sorted(K.TEAMS_LEAGUE[str(league_name).lower()])
         response = make_response(jsonify({'league': league_name,
                                           'teams': teams}))
+
+    return response
+
+
+@app.route('/api/v1/update/<league_name>', methods=['GET'])
+def update_league(league_name):
+
+    npm = request.args['npm']
+
+    assert int(npm) > 0, 'NPM must be greater than 0'
+
+    league_params = {}
+
+    response_league_name = check_league(league_name)
+    response_league_data = check_data_league(league_name, npm) if response_league_name['check'] else {'check':False,
+                                                                                                      'msg':''}
+
+    msg = f"League_name: {response_league_name['msg']} \nLeague_data: {response_league_data['msg']}"
+
+    if not response_league_name['check'] or not response_league_data['check']:
+        response = make_response(msg, 404)
+    else:
+        league_params['league_name'] = league_name
+        league_params['n_prev_match'] = npm
+        league_params['league_dir'] = K.DATA_DIR
+
+        result , error = update_data_league(league_params)
+
+        if result:
+            succ_msg = f'Successful Update: {league_name} - npm={npm}'
+            logger.info(succ_msg)
+            response = make_response(f'Successful Update: {league_name} - npm={npm}', 200)
+        else:
+            fail_msg = f'Failed Update: {league_name} - npm={npm} \n {error}'
+            logger.error(fail_msg)
+            response = make_response(f'Failed Update: {league_name} - npm={npm} \n {error}', 400)
 
     return response
 
@@ -84,7 +121,7 @@ def predict(league_name):
     return response
 
 @app.route('/api/v1/show/<league_name>/hist', methods=['POST'])
-def show_evaluation(league_name):
+def show_evaluation_hist(league_name):
 
     params = request.json  # requested params : [thr, field]
     params['save_dir'] = 'api/v1/templates/static/'
@@ -102,7 +139,7 @@ def show_evaluation(league_name):
     return response
 
 @app.route('/api/v1/show/<league_name>/thr_analysis', methods=['POST'])
-def show_evaluation(league_name):
+def show_evaluation_thr(league_name):
 
     params = request.json  # requested params : [thr, field, thr_list]
     params['save_dir'] = 'api/v1/templates/static/'

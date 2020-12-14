@@ -53,56 +53,20 @@ def generate_dataset(input_data, params):
     
     return dataloader, feat_eng, in_features
 
-# def test_set_integration(test_data, matches_df):
-#
-#     for field in ['home_data', 'away_data']:
-#         test_data[field] = test_data[field].reset_index(drop=True)
-#
-#         for i_row in range(len(test_data[field])):
-#             row = test_data[field].iloc[i_row]
-#             team = row['team']
-#
-#             f_home = None
-#
-#             if(team in matches_df['home'].to_list()):
-#                 f_home = 1
-#                 match_df = matches_df[matches_df['home'] == team]
-#                 opponent = match_df['away'].item()
-#                 bet = match_df['home_bet'].item()
-#
-# #                test_data['home_data'].loc[i_row, 'f-opponent'] = opponent
-# #                test_data['home_data'].loc[i_row, 'f-bet-WD'] = bet
-# #                test_data['home_data'].loc[i_row, 'f-home'] = f_home
-#
-#             elif(team in matches_df['away'].to_list()):
-#                 f_home = 0
-#                 match_df = matches_df[matches_df['away'] == team]
-#                 opponent = match_df['home'].item()
-#                 bet = match_df['away_bet'].item()
-#
-# #                test_data['away_data'].loc[i_row, 'f-opponent'] = opponent
-# #                test_data['away_data'].loc[i_row, 'f-bet-WD'] = bet
-# #                test_data['away_data'].loc[i_row, 'f-home'] = f_home
-#
-#             if(f_home is not None):
-#                 test_data[field].loc[i_row, 'f-opponent'] = opponent
-#                 test_data[field].loc[i_row, 'f-bet-WD'] = bet
-#                 test_data[field].loc[i_row, 'f-home'] = f_home
-#
-#
-#     return test_data
-#
+def update_data_league(params):
+    league_name = params['league_name']
+    npm = params['n_prev_match']
+    params['train'] = True
+    params['update'] = True
 
-# def generate_test_dataset(test_data, feat_eng, inference):
-#
-#     data = feat_eng.tranforms(test_data, production=True)
-#
-#     for x in ['home', 'away']:
-#         data[x] = data[x].drop(data[x][data[x]['f-opponent'] == 1].index)
-#
-#     dataloader = create_test_dataloader(data, inference=inference)
-#
-#     return dataloader
-    
-    
-    
+    try:
+        league_csv, input_data = extract_data_league(params)
+        last_date = league_csv.iloc[-1]['Date']
+
+        logger.info(f'> Updating {league_name} npm={npm} at date {last_date}')
+
+    except Exception as error:
+        return False, error
+
+    return True, None
+

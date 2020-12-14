@@ -115,34 +115,24 @@ def search_previous_matches(league_df, team_name, date,
 
 
 
-def compute_outcome_match(team, prev_match, i):
-    
-    if(len(prev_match) > i):
-        matches = prev_match.iloc[i]
+def compute_outcome_match(team, prev_match, home_factor):
+
+    if len(prev_match) == 0:
+        return np.nan
+
     else:
-        outcome = np.nan
-        return outcome
-    
-    if(matches['HomeTeam'] == team):
-        if(str(matches['result_1X2']) == '1'):
-            outcome = 'W'
-        elif(str(matches['result_1X2']) == 'X'):
-            outcome = 'D'
-        elif(str(matches['result_1X2']) == '2'):
-            outcome = 'L'    
-    
-    elif(matches['AwayTeam'] == team):
-        if(str(matches['result_1X2']) == '1'):
-            outcome = 'L'
-        elif(str(matches['result_1X2']) == 'X'):
-            outcome = 'D'
-        elif(str(matches['result_1X2']) == '2'):
-            outcome = 'W'
-    
-    else:
-        raise ValueError('Error Computing Outcome Match')
-            
-    return outcome
+
+        if(home_factor == True):
+            points = prev_match['home_points'].sum()
+        elif(home_factor == False):
+            points = prev_match['away_points'].sum()
+        else:
+            home_matches = prev_match[prev_match['HomeTeam'] == team]
+            points = home_matches['home_points'].sum()
+            away_matches = prev_match[prev_match['AwayTeam'] == team]
+            points += away_matches['away_points'].sum()
+
+        return points
     
 def convert_result_1X2_to_WDL(result_1X2, home):
 
@@ -170,6 +160,22 @@ def convert_result_1X2_to_WDL(result_1X2, home):
             raise ValueError('Error Convert result 1x2 to wdl')
             
     return outcome
-        
+
+def compute_outcome_points(result_1X2, home):
+    home_result = {'1':3,
+                   'X':1,
+                   '2':0}
+
+    away_result = {'1': 0,
+                   'X': 1,
+                   '2': 3}
+
+
+    if(home):
+        return home_result[str(result_1X2)]
+
+    else:
+        return away_result[str(result_1X2)]
+
     
     

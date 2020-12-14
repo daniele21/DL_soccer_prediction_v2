@@ -1,4 +1,5 @@
 import scripts.data.constants as K
+from core.file_manager.os_utils import exists
 
 def check_league(league_name):
     league_name = str(league_name).lower()
@@ -10,4 +11,22 @@ def check_league(league_name):
         msg = f' - League found: {league_name}'
         check = True
 
-    return check, msg
+    response = {'check':check,
+                'msg':msg}
+
+    return response
+
+def check_data_league(league_name, npm):
+
+    data_path = f'{K.DATA_DIR}{league_name}/{league_name}_npm={npm}.csv'
+
+    check = exists(data_path)
+    if not check:
+        msg = f'Data not Found: {data_path}'
+    else:
+        msg = f'Data Found at {data_path}'
+
+    response = {'check':check,
+                'msg':msg}
+
+    return response

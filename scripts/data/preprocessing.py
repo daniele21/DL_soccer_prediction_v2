@@ -10,10 +10,10 @@ from scripts.data.data_utils import (search_previous_matches,
                                      search_future_features,
                                      search_future_WDL,
                                      search_future_opponent,
-                                     search_future_home, 
+                                     search_future_home,
                                      search_future_bet_WD,
                                      compute_outcome_match,
-                                     convert_result_1X2_to_WDL)
+                                     convert_result_1X2_to_WDL, compute_outcome_points)
 from core.logger.logging import logger
 from core.file_manager.os_utils import exists
 from core.time_decorator import timing
@@ -58,8 +58,11 @@ def bind_last_matches(league_df, n_prev_match):
         date = row['Date']
         index = row.name
 
-        league_df = _bind_matches(league_df, home_team, date, n_prev_match, index, home=True)
-        league_df = _bind_matches(league_df, away_team, date, n_prev_match, index, home=False)
+        # league_df = _bind_matches(league_df, home_team, date, n_prev_match, index, home=True)
+        # league_df = _bind_matches(league_df, away_team, date, n_prev_match, index, home=False)
+
+        league_df = _bind_cum_matches(league_df, home_team, date, n_prev_match, index, home=True)
+        league_df = _bind_cum_matches(league_df, away_team, date, n_prev_match, index, home=False)
 
     return league_df
 
@@ -82,6 +85,36 @@ def _bind_matches(league_df, team, date, n_prev_match, index, home):
         league_df.loc[index, last_home_col] = compute_outcome_match(team, prev_matches['home'], i)
         league_df.loc[index, last_away_col] = compute_outcome_match(team, prev_matches['away'], i)
         league_df.loc[index, last_match_col] = compute_outcome_match(team, prev_matches['none'], i)
+
+    return league_df
+
+def _bind_cum_matches(league_df, team, date, n_prev_match, index, home):
+
+    prev_matches = {}
+
+    for home_match in [True, False, None]:
+        key = 'home' if home_match==True else 'away' if home_match==False else 'none'
+        prev_matches[key] = search_previous_matches(league_df, team, date, n_prev_match, home_match)
+
+    home_factor = 'HOME' if home==True else 'AWAY' if home== False else None
+    assert home_factor is not None, f'ERROR: bind_matches - Wrong Home Factor'
+
+    for i in range(0, n_prev_match):
+        last_home_col = f'{home_factor}_last-{i+1}-home'
+        last_away_col = f'{home_factor}_last-{i+1}-away'
+        last_match_col = f'{home_factor}_last-{i+1}'
+
+        prev_home_matches = prev_matches['home'].iloc[:i+1]
+        if(len(prev_home_matches) >= i+1):
+            league_df.loc[index, last_home_col] = compute_outcome_match(team, prev_home_matches, home_factor=True)
+
+        prev_away_matches = prev_matches['away'].iloc[: i+1]
+        if (len(prev_away_matches) >= i+1):
+            league_df.loc[index, last_away_col] = compute_outcome_match(team, prev_away_matches, home_factor=False)
+
+        prev_none_matches = prev_matches['none'].iloc[: i + 1]
+        if (len(prev_none_matches) >= i+1):
+            league_df.loc[index, last_match_col] = compute_outcome_match(team, prev_none_matches, home_factor=None)
 
     return league_df
 
@@ -125,7 +158,101 @@ def _bind_trend_last_previous_match(league_df, n_prev_match):
             league_df.loc[index, last_match_col] = compute_outcome_match(away_team, prev_matches, i)
         
     return league_df
-        
+
+def _compute_cumultive_feature(season_df, team, feature_name):
+    home_team_df = season_df[season_df['HomeTeam'] == team]
+    away_team_df = season_df[season_df['AwayTeam'] == team]
+
+    home_cum_feature = home_team_df[f'home_{feature_name}'].cumsum()
+    away_cum_feature = away_team_df[f'away_{feature_name}'].cumsum()
+
+    season_df.loc[home_team_df.index, f'overall_home'] = home_team_df[f'home_{feature_name}']
+    season_df.loc[away_team_df.index, f'overall_away'] = away_team_df[f'away_{feature_name}']
+    season_df.loc[home_team_df.index, f'cum_home_{feature_name}'] = home_cum_feature
+    season_df.loc[away_team_df.index, f'cum_away_{feature_name}'] = away_cum_feature
+
+
+    team_df = season_df[(season_df['HomeTeam'] == team) | (season_df['AwayTeam'] == team)]
+
+    overall_df = team_df[['overall_home', 'overall_away']].copy(deep=True)
+    overall_df['overall_home'] = overall_df['overall_home'].fillna(overall_df['overall_away'])
+    overall_list = overall_df['overall_home'].cumsum().to_list()
+
+    season_df = season_df.drop('overall_home', axis=1)
+    season_df = season_df.drop('overall_away', axis=1)
+
+    for i, index in enumerate(team_df.index):
+        row = team_df.loc[index]
+        home = True if row['HomeTeam'] == team else False
+
+        if home:
+            season_df.loc[index, f'home_league_{feature_name}'] = overall_list[i]
+        else:
+            season_df.loc[index, f'away_league_{feature_name}'] = overall_list[i]
+
+    return season_df
+
+def _compute_cumultive_points(season_df, team):
+    home_team_df = season_df[season_df['HomeTeam'] == team]
+    away_team_df = season_df[season_df['AwayTeam'] == team]
+
+    home_cum_points = home_team_df['home_points'].cumsum()
+    away_cum_points = away_team_df['away_points'].cumsum()
+
+    season_df.loc[home_team_df.index, 'cum_points_H'] = home_team_df['home_reward']
+    season_df.loc[away_team_df.index, 'cum_points_A'] = away_team_df['away_reward']
+    season_df.loc[home_team_df.index, 'cum_home_points'] = home_cum_points
+    season_df.loc[away_team_df.index, 'cum_away_points'] = away_cum_points
+
+    team_df = season_df[(season_df['HomeTeam'] == team) | (season_df['AwayTeam'] == team)]
+
+    cum_points_df = team_df[['cum_points_H', 'cum_points_A']].copy(deep=True)
+    cum_points_df['cum_points_H'] = cum_points_df['cum_points_H'].fillna(cum_points_df['cum_points_A'])
+    cum_points = cum_points_df['cum_points_H'].cumsum().to_list()
+    season_df = season_df.drop('cum_points_H', axis=1)
+    season_df = season_df.drop('cum_points_A', axis=1)
+
+    for i, index in enumerate(team_df.index):
+        row = team_df.loc[index]
+        home = True if row['HomeTeam'] == team else False
+
+        if home:
+            season_df.loc[index, 'home_league_points'] = cum_points[i]
+        else:
+            season_df.loc[index, 'away_league_points'] = cum_points[i]
+
+    return season_df
+
+
+def creating_features(league_df):
+
+    for season in league_df['season'].unique():
+        season_df = league_df[league_df['season'] == season]
+        # TODO -> solve the pandas warning (use .loc)
+        season_df['cum_home_points'] = np.nan
+        season_df['cum_away_points'] = np.nan
+        season_df['home_league_points'] = np.nan
+        season_df['away_league_points'] = np.nan
+
+        for team in season_df['HomeTeam'].unique():
+            season_df = _compute_cumultive_feature(season_df, team, feature_name='points')
+            season_df = _compute_cumultive_feature(season_df, team, feature_name='goals')
+
+        league_df.loc[league_df['season'] == season, 'cum_home_points'] = season_df['cum_home_points']
+        league_df.loc[league_df['season'] == season, 'cum_away_points'] = season_df['cum_away_points']
+        league_df.loc[league_df['season'] == season, 'home_league_points'] = season_df['home_league_points']
+        league_df.loc[league_df['season'] == season, 'away_league_points'] = season_df['away_league_points']
+
+        league_df.loc[league_df['season'] == season, 'cum_home_goals'] = season_df['cum_home_goals']
+        league_df.loc[league_df['season'] == season, 'cum_away_goals'] = season_df['cum_away_goals']
+        league_df.loc[league_df['season'] == season, 'home_league_goals'] = season_df['home_league_goals']
+        league_df.loc[league_df['season'] == season, 'away_league_goals'] = season_df['away_league_goals']
+
+    league_df['point_diff'] = league_df['home_league_points'] - league_df['away_league_points']
+    league_df['goals_diff'] = league_df['home_league_goals'] - league_df['away_league_goals']
+
+    return league_df
+
 
 def feature_engineering_league(league_df, n_prev_match):
     
@@ -144,16 +271,27 @@ def feature_engineering_league(league_df, n_prev_match):
     league_df.loc[league_df['result_1X2'] == 'H', ['result_1X2']] = '1'
     league_df.loc[league_df['result_1X2'] == 'D', ['result_1X2']] = 'X'
     league_df.loc[league_df['result_1X2'] == 'A', ['result_1X2']] = '2'
+
+    league_df.loc[league_df['result_1X2'] == '1', 'home_points'] = 3
+    league_df.loc[league_df['result_1X2'] == '1', 'away_points'] = 0
+    league_df.loc[league_df['result_1X2'] == 'X', 'home_points'] = 1
+    league_df.loc[league_df['result_1X2'] == 'X', 'away_points'] = 1
+    league_df.loc[league_df['result_1X2'] == '2', 'home_points'] = 0
+    league_df.loc[league_df['result_1X2'] == '2', 'away_points'] = 3
     
     league_df = league_df[['league', 'season', 'Date',
                            'HomeTeam', 'AwayTeam', 'home_goals',
                            'away_goals', 'result_1X2',
-                           'bet_1', 'bet_X', 'bet_2']]
+                           'bet_1', 'bet_X', 'bet_2',
+                           'home_points', 'away_points']]
+
+
 
     league_df = league_df.dropna()
-
     league_df = league_df.reset_index(drop=True)
 
+
+    league_df = creating_features(league_df)
 
     league_df = bind_last_matches(league_df, n_prev_match)
 
@@ -191,7 +329,8 @@ def _split_teams_one_row(data, i_row, n_prev_match, home):
                      'f-home': f_home,
                      'f-bet-WD': f_bet_WD,
                      'f-result-WDL': f_WDL,
-                     'f-WD': f_WD
+                     'f-WD': f_WD,
+                     # 'f-'
                      }
 
     home_factor = 'HOME' if home else 'AWAY'
@@ -211,88 +350,6 @@ def _split_teams_one_row(data, i_row, n_prev_match, home):
     team_features['bet-WD'] = 1 / ((1 / row['bet_1']) + (1 / row['bet_X']))
 
     return team_features
-
-# def _split_teams_one_row(data, i_row, n_prev_match):
-#
-#     row = data.iloc[i_row]
-#
-#     # HOME TEAM
-#     team = row['HomeTeam']
-#     opponent = row['AwayTeam']
-#     goal_scored = row['home_goals']
-#     goal_conceded = row['away_goals']
-#     result_1X2 = row['result_1X2']
-#     season = row['season']
-#
-#     f_home, f_opponent, f_bet_WD, f_WDL, f_WD = search_future_features(data, team, i_row, season)
-#
-#     home_team = {'team'         : team,
-#                  'opponent'     : opponent,
-#                  'goal_scored'  : goal_scored,
-#                  'goal_conceded': goal_conceded,
-#                  'result-WDL'   : convert_result_1X2_to_WDL(result_1X2, home=True),
-#                  'home'         : True,
-#                  'f-opponent'   : f_opponent,
-#                  'f-home'       : f_home,
-#                  'f-bet-WD'     : f_bet_WD,
-#                  'f-result-WDL' : f_WDL,
-#                  'f-WD'         : f_WD
-#                 }
-#     for n in range(1, n_prev_match+1):
-#         home_team[f'last-{n}_home'] = row[f'HOME_last-{n}-home']
-#         home_team[f'last-{n}_home'] = row[f'HOME_last-{n}-home']
-#         home_team[f'last-{n}_home'] = row[f'HOME_last-{n}-home']
-#
-#         home_team[f'last-{n}_away'] = row[f'HOME_last-{n}-away']
-#         home_team[f'last-{n}_away'] = row[f'HOME_last-{n}-away']
-#         home_team[f'last-{n}_away'] = row[f'HOME_last-{n}-away']
-#
-#         home_team[f'last-{n}'] = row[f'HOME_last-{n}']
-#         home_team[f'last-{n}'] = row[f'HOME_last-{n}']
-#         home_team[f'last-{n}'] = row[f'HOME_last-{n}']
-#
-#     home_team['bet-WD'] = 1/((1/row['bet_1']) + (1/row['bet_X']))
-#
-#
-#     # AWAY TEAM
-#     team = row['AwayTeam']
-#     opponent = row['HomeTeam']
-#     goal_scored = row['away_goals']
-#     goal_conceded = row['home_goals']
-#     result_1X2 = row['result_1X2']
-#     season = row['season']
-#
-#     f_home, f_opponent, f_bet_WD, f_WDL, f_WD = search_future_features(data, team, i_row, season)
-#
-#     away_team = {'team'         : team,
-#                  'opponent'     : opponent,
-#                  'goal_scored'  : goal_scored,
-#                  'goal_conceded': goal_conceded,
-#                  'result-WDL'   : convert_result_1X2_to_WDL(result_1X2, home=True),
-#                  'home'         : False,
-#                  'f-opponent'   : f_opponent,
-#                  'f-home'       : f_home,
-#                  'f-bet-WD'     : f_bet_WD,
-#                  'f-result-WDL' : f_WDL,
-#                  'f-WD'         : f_WD
-#                  }
-#
-#     for n in range(1, n_prev_match+1):
-#         away_team[f'last-{n}_home'] = row[f'AWAY_last-{n}-home']
-#         away_team[f'last-{n}_home'] = row[f'AWAY_last-{n}-home']
-#         away_team[f'last-{n}_home'] = row[f'AWAY_last-{n}-home']
-#
-#         away_team[f'last-{n}_away'] = row[f'AWAY_last-{n}-away']
-#         away_team[f'last-{n}_away'] = row[f'AWAY_last-{n}-away']
-#         away_team[f'last-{n}_away'] = row[f'AWAY_last-{n}-away']
-#
-#         away_team[f'last-{n}'] = row[f'AWAY_last-{n}']
-#         away_team[f'last-{n}'] = row[f'AWAY_last-{n}']
-#         away_team[f'last-{n}'] = row[f'AWAY_last-{n}']
-#
-#     away_team['bet-WD'] = 1/((1/row['bet_2']) + (1/row['bet_X']))
-#
-#     return home_team, away_team
 
 def _split_teams(league_df, n_prev_match):
     """

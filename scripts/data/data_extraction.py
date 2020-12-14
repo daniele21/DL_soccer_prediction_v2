@@ -40,6 +40,7 @@ class Database_Manager():
             # GENERATING LEAGUE CSV
             else:
                 league_df = extract_training_data(league_name, n_prev_match)
+                logger.info(f'Saving data at {league_path}')
                 league_df.to_csv(league_path)
 
 
