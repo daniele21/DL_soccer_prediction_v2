@@ -3,21 +3,25 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
 
+from scripts.constants.configs import BASE_DATASET, WINDOWED_DATASET
+from scripts.data.dataset_utils import windowed_dataset_split
+
+
 def data_to_tensor(data):
     return torch.Tensor(data.values)
 
 
 class Training_Soccer_Dataset(Dataset):
 
-    def __init__(self, train_data, window_size, train=False):
+    def __init__(self, train_data, params, target_col='f-WD'):
 
-        self.x = {'home':train_data['home'].drop('f-WD', axis=1),
-                  'away':train_data['away'].drop('f-WD', axis=1)}
-        self.y = {'home':train_data['home']['f-WD'],
-                  'away':train_data['away']['f-WD']}
+        self.x = {'home':train_data['home'].drop(target_col, axis=1),
+                  'away':train_data['away'].drop(target_col, axis=1)}
+        self.y = {'home':train_data['home'][target_col],
+                  'away':train_data['away'][target_col]}
 
-        self.window_size = window_size
-        self.train = train
+        self.window_size = params['window_size']
+        self.train = params['train']
 
         print(f'\t {self.x["home"].shape},{self.y["home"].shape}')
 
@@ -119,114 +123,164 @@ class Soccer_Dataset(Dataset):
 
 class Windowed_Soccer_Dataset(Dataset):
 
-    def __init__(self, data, window_size, train=True):
+    def __init__(self, data, params, target_col='f-WD'):
 
-        self.x_home = data['home'].drop('f-WD', axis=1)
-        self.y_home = data['home']['f-WD']
+        max_length = min(len(data['home']), len(data['away']))
+        data = {'home':data['home'].iloc[:max_length],
+                'away': data['away'].iloc[:max_length]}
 
-        self.x_away = data['away'].drop('f-WD', axis=1)
-        self.y_away = data['away']['f-WD']
+        self.x = {'home':data['home'].drop(target_col, axis=1),
+                  'away':data['away'].drop(target_col, axis=1)}
+        self.y = {'home':data['home'][target_col],
+                  'away':data['away'][target_col]}
 
-        self.window_size = 0 if window_size is None else window_size
-
-        self.train = train
-
-        print(f'\t {self.x_home.shape},{self.y_home.shape} - {self.x_away.shape},{self.y_away.shape}')
+        self.batch_size = params['batch_size']
+        # self.window_size = params['window_size']    # integer
+        # self.train = params['train']                # boolean
+        # self.split_len = int(params['split_size'] * self.window_size)
 
     def _to_tensor(self, data):
         return torch.Tensor(data.values)
 
     def __len__(self):
-        return len(self.x_home) - self.window_size
+        return len(self.x['home'])
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        x_start, x_end = idx, idx+self.window_size-1
-        y_start, y_end = idx+self.window_size-1, idx+self.window_size
+        x_home = data_to_tensor(self.x['home'])
+        x_away = data_to_tensor(self.x['away'])
 
-        x_home = data_to_tensor(self.x_home[x_start:x_end])
-        x_away = data_to_tensor(self.x_away[x_start:x_end])
+        y_home = data_to_tensor(self.y['home'])
+        y_away = data_to_tensor(self.y['away'])
 
-        y_home = data_to_tensor(self.y_home[y_start:y_end])
-        y_away = data_to_tensor(self.y_away[y_start:y_end])
+        return x_home, x_away, y_home, y_away
 
-        return x_home, y_home, x_away, y_away
-  
 def create_training_dataloader(input_data, params):
-    
-    window = int(params['window_size'])
-    split_size = float(params['split_size'])
-    test_set = bool(params['test_set']) if 'test_set' in list(params.keys()) else False
-    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else None
 
-    train_size = int(split_size * len(input_data['home']))
-    valid_size = (len(input_data['home']) - train_size)
+    if(params['dataset'] == BASE_DATASET):
+        dataset = base_dataset(input_data, params)
+        batch_size = int(params['batch_size'])
 
-    if(test_size is None):
-        valid_size = int((2/3) * valid_size) if test_set == True else valid_size
-        test_size = int((1/3) * (len(input_data['home']) - train_size)) if test_set == True else None
+    elif(params['dataset'] == WINDOWED_DATASET):
+        dataset = windowed_dataset(input_data, params)
+        # batch_size = int(params['window_size'])
+        in_feature = len(dataset['train'][0].x['home'].columns)
+        return dataset, in_feature
+
     else:
-        valid_size = valid_size - test_size
-
-
-    train_data, valid_data, test_data = {}, {}, {}
-    
-    train_data['home'] = input_data['home'].iloc[: train_size]
-    train_data['away'] = input_data['away'].iloc[: train_size]
-    
-    if(split_size == 1):
-        split = 0.15
-        valid_size = int(len(input_data['home']) * split)
-        
-        valid_data['home'] = input_data['home'].iloc[-valid_size : ]
-        valid_data['away'] = input_data['away'].iloc[-valid_size : ]
-        
-    else:
-        valid_data['home'] = input_data['home'].iloc[train_size : train_size+valid_size]
-        valid_data['away'] = input_data['away'].iloc[train_size : train_size+valid_size]
-
-        test_data['home'] = input_data['home'].iloc[train_size+valid_size: ] if test_size is not None else None
-        test_data['away'] = input_data['away'].iloc[train_size+valid_size: ] if test_size is not None else None
-
-
-    dataset = {'train':{},
-               'eval':{}}
-
-    if(params['dataset'] == 'base'):
-        dataset_fn = Training_Soccer_Dataset
-        print('> Creating Soccer Dataset')
-    else:
-        dataset_fn = Training_Soccer_Dataset
-        
-    print('  > Training Set:')
-    dataset['train'] = dataset_fn(train_data,
-                                  window_size=window,
-                                  train=True)
-
-    print('  > Validation Set:')
-    dataset['eval'] = dataset_fn(valid_data,
-                                 window_size=window,
-                                 train=False)
+        dataset = base_dataset(input_data, params)
+        batch_size = int(params['batch_size'])
 
 
     dataloader = {x:DataLoader(dataset     = dataset[x],
-                               batch_size  = int(params['batch_size']),
+                               batch_size  = batch_size,
                                shuffle     = False,
                                num_workers = params['n_workers']
                                ) 
                                for x in ['train', 'eval']
                  }
-
-    print('  > Test Set:')
-    dataloader['test'] = {}
-    dataloader['test']['home'] = create_test_dataloader(test_data['home'])
-    dataloader['test']['away'] = create_test_dataloader(test_data['away'])
     
     in_features = len(dataset['train'].x['home'].columns)
+
+    # if test_size > 0:
+    #     print('  > Test Set:')
+    #     dataloader['test'] = {}
+    #     dataloader['test']['home'] = create_test_dataloader(test_data['home'])
+    #     dataloader['test']['away'] = create_test_dataloader(test_data['away'])
     
     return dataloader, in_features
+
+def windowed_dataset(data, params):
+    train_params = {'train': True,
+                    'batch_size': params['batch_size']}
+    eval_params = {**train_params}
+    eval_params['train'] = False
+
+    data_size = len(data['home'])
+    splitter = windowed_dataset_split(data_size, params)
+    n_folds = splitter.get_n_splits()
+
+    train_set_folds = {'home':[],
+                       'away':[]}
+    eval_set_folds = {'home': [],
+                      'away': []}
+
+    for field in ['home', 'away']:
+        for train_index, eval_index in splitter.split(data[field]):
+            train_slice, eval_slice = slice(train_index[0], train_index[-1]), slice(eval_index[0], eval_index[-1])
+
+            train_set = data[field].iloc[train_slice]
+            eval_set = data[field].iloc[eval_slice]
+
+            train_set_folds[field].append(train_set)
+            eval_set_folds[field].append(eval_set)
+
+    dataset = {'train': [],
+               'eval': []}
+
+    for i in range(n_folds):
+        train_home, train_away = train_set_folds['home'][i], train_set_folds['away'][i]
+        eval_home, eval_away = eval_set_folds['home'][i], eval_set_folds['away'][i]
+
+        train_data = {'home': train_home,
+                      'away': train_away}
+
+        eval_data = {'home': eval_home,
+                     'away': eval_away}
+
+        train_dataset = Windowed_Soccer_Dataset(train_data, train_params)
+        eval_dataset = Windowed_Soccer_Dataset(eval_data, eval_params)
+
+        dataset['train'].append(train_dataset)
+        dataset['eval'].append(eval_dataset)
+
+    return dataset
+
+def base_dataset(data, params):
+    window = int(params['window_size'])
+    split_size = float(params['split_size'])
+    test_set = bool(params['test_set']) if 'test_set' in list(params.keys()) else False
+    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else 0
+
+    train_size = int(split_size * len(data['home']))
+    valid_size = (len(data['home']) - train_size)
+
+    if(test_size is None):
+        valid_size = int((2/3) * valid_size) if test_set == True else valid_size
+        test_size = int((1/3) * (len(data['home']) - train_size)) if test_set == True else None
+    else:
+        valid_size = valid_size - test_size
+
+    train_data, valid_data, test_data = {}, {}, {}
+
+    train_data['home'] = data['home'].iloc[: train_size]
+    train_data['away'] = data['away'].iloc[: train_size]
+
+    if (split_size == 1):
+        split = 0.15
+        valid_size = int(len(data['home']) * split)
+
+        valid_data['home'] = data['home'].iloc[-valid_size:]
+        valid_data['away'] = data['away'].iloc[-valid_size:]
+
+    else:
+        valid_data['home'] = data['home'].iloc[train_size: train_size + valid_size]
+        valid_data['away'] = data['away'].iloc[train_size: train_size + valid_size]
+
+        test_data['home'] = data['home'].iloc[train_size + valid_size:] if test_size > 0 else None
+        test_data['away'] = data['away'].iloc[train_size + valid_size:] if test_size > 0 else None
+
+    train_params = {'train': True,
+                    'window_size': window}
+    eval_params = train_params
+
+    dataset = {}
+    dataset['train'] = Training_Soccer_Dataset(train_data, train_params)
+    dataset['eval'] = Training_Soccer_Dataset(valid_data, eval_params)
+
+    return dataset
 
 def create_test_dataloader(test_data):
     # print('   > Test Set:')
