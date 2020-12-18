@@ -228,11 +228,12 @@ def creating_features(league_df):
 
     for season in league_df['season'].unique():
         season_df = league_df[league_df['season'] == season]
+
         # TODO -> solve the pandas warning (use .loc)
-        season_df['cum_home_points'] = np.nan
-        season_df['cum_away_points'] = np.nan
-        season_df['home_league_points'] = np.nan
-        season_df['away_league_points'] = np.nan
+        season_df.loc[:,'cum_home_points'] = np.nan
+        season_df.loc[:,'cum_away_points'] = np.nan
+        season_df.loc[:,'home_league_points'] = np.nan
+        season_df.loc[:,'away_league_points'] = np.nan
 
         for team in season_df['HomeTeam'].unique():
             season_df = _compute_cumultive_feature(season_df, team, feature_name='points')
@@ -248,8 +249,8 @@ def creating_features(league_df):
         league_df.loc[league_df['season'] == season, 'home_league_goals'] = season_df['home_league_goals']
         league_df.loc[league_df['season'] == season, 'away_league_goals'] = season_df['away_league_goals']
 
-    league_df['point_diff'] = league_df['home_league_points'] - league_df['away_league_points']
-    league_df['goals_diff'] = league_df['home_league_goals'] - league_df['away_league_goals']
+    league_df.loc[:,'point_diff'] = league_df['home_league_points'] - league_df['away_league_points']
+    league_df.loc[:,'goals_diff'] = league_df['home_league_goals'] - league_df['away_league_goals']
 
     return league_df
 
@@ -305,14 +306,22 @@ def _split_teams_one_row(data, i_row, n_prev_match, home):
 
     assert home == True or home == False, 'ERROR: _split_teams_one_row -> Wrong home value'
 
-    team = row['HomeTeam'] if home==True else row['AwayTeam']
-    opponent = row['AwayTeam'] if home==True else row['HomeTeam']
+    field = 'home' if home else 'away'
+    team = row['HomeTeam'] if home else row['AwayTeam']
+    opponent = row['AwayTeam'] if home else row['HomeTeam']
     date = row['Date']
-    goal_scored = row['home_goals'] if home==True else row['away_goals']
-    goal_conceded = row['away_goals'] if home==True else row['home_goals']
-    result_1X2 = row['result_1X2']
+    goal_scored = row['home_goals'] if home else row['away_goals']
+    goal_conceded = row['away_goals'] if home else row['home_goals']
+    # result_1X2 = row['result_1X2']
     season = row['season']
     league = row['league']
+    points = row['home_points'] if home else row['away_points']
+    cum_points = row['cum_home_points'] if home else row['cum_away_points']
+    league_points = row['home_league_points'] if home else row['away_league_points']
+    cum_goals = row['cum_home_goals'] if home else row['cum_away_goals']
+    league_goals = row['home_league_goals'] if home else row['away_league_goals']
+    point_diff = row['point_diff'] if home else (row['point_diff'] * -1)
+    goals_diff = row['goals_diff'] if home else (row['goals_diff'] * -1)
 
     f_home, f_opponent, f_bet_WD, f_WDL, f_WD = search_future_features(data, team, i_row, season)
 
@@ -323,15 +332,22 @@ def _split_teams_one_row(data, i_row, n_prev_match, home):
                      'date':date,
                      'goal_scored': goal_scored,
                      'goal_conceded': goal_conceded,
-                     'result-WDL': convert_result_1X2_to_WDL(result_1X2, home),
+                     'points': points,
                      'home': home,
                      'f-opponent': f_opponent,
                      'f-home': f_home,
                      'f-bet-WD': f_bet_WD,
                      'f-result-WDL': f_WDL,
                      'f-WD': f_WD,
-                     # 'f-'
+                     f'cum_{field}_points':cum_points,
+                     f'cum_{field}_goals':cum_goals,
+                     'league_points':league_points,
+                     'league_goals':league_goals,
+                     'point_diff':point_diff,
+                     'goals_diff':goals_diff
                      }
+
+    team_features['bet-WD'] = 1 / ((1 / row['bet_1']) + (1 / row['bet_X']))
 
     home_factor = 'HOME' if home else 'AWAY'
     for n in range(1, n_prev_match + 1):
@@ -346,8 +362,6 @@ def _split_teams_one_row(data, i_row, n_prev_match, home):
         team_features[f'last-{n}'] = row[f'{home_factor}_last-{n}']
         team_features[f'last-{n}'] = row[f'{home_factor}_last-{n}']
         team_features[f'last-{n}'] = row[f'{home_factor}_last-{n}']
-
-    team_features['bet-WD'] = 1 / ((1 / row['bet_1']) + (1 / row['bet_X']))
 
     return team_features
 
