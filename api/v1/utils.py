@@ -1,10 +1,9 @@
 import io
-import base64
 
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from flask import Response, render_template
 
-import scripts.data.constants as K
+import scripts.constants.league as LEAGUE
 from scripts.utils.loading import load_configs
 
 def show_plot(fig):
@@ -24,7 +23,7 @@ def load_models(league_name=None):
     else:
         models, configs = {}, {}
 
-        for league_name in K.LEAGUE_NAMES:
+        for league_name in LEAGUE.LEAGUE_NAMES:
             model, config = load_configs(league_name)
 
             models[league_name] = model
