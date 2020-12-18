@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from scripts.constants.configs import DEFAULT_TEST_SIZE
 from scripts.data.data_process import extract_data_league
 from scripts.data.datasets import create_test_dataloader
 from scripts.data.postprocessing import labeling_predictions, generate_outcome
+from scripts.exceptions.param_exc import ParameterError
+
 
 def model_inference(test_data, feat_eng, model, model_name=None, train=False):
 
@@ -60,3 +63,24 @@ def generate_output(matches_df, predictions, thr):
                                     .to_dict()
 
     return outcome
+
+def real_case_inference(model, params, feat_eng):
+    field = params['field'] if 'field' in list(params.keys()) else None
+
+    if field is None:
+        raise ParameterError('field')
+
+    test_size = len(model.testloader[field]) if model.testloader is not None else DEFAULT_TEST_SIZE
+
+    test_data = generate_test_data(params)
+
+    test_set = test_data[field][-test_size:]
+    test_set = test_set[test_set['f-opponent'].isnull() == False]
+
+    pred, true = model_inference(test_set,
+                                 feat_eng,
+                                 model,
+                                 model_name=field,
+                                 train=True)
+
+    return test_set, pred, true
