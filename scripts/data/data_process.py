@@ -6,12 +6,20 @@ import os
 from scripts.data import constants as K
 from scripts.data.data_extraction import Database_Manager
 from scripts.data.preprocessing import data_preprocessing
-from scripts.data.feature_engineering import Feature_engineering_v1
+from scripts.data.feature_engineering import Feature_engineering_v1, Feature_engineering_v2
 from scripts.data.datasets import create_test_dataloader, create_training_dataloader
 from scripts.utils.utils import logger
 from core.file_manager.saving import save_object
 
 def extract_data_league(params):
+    """
+
+    Args:
+        params:
+
+    Returns:
+
+    """
     
     db_manager = Database_Manager(params)
     
@@ -34,6 +42,10 @@ def generate_dataset(input_data, params):
     if(int(params['version']) == 1):
         home_feat_eng = Feature_engineering_v1(home_data, normalize=normalize)
         away_feat_eng = Feature_engineering_v1(away_data, normalize=normalize)
+
+    elif(int(params['version']) == 2):
+        home_feat_eng = Feature_engineering_v2(home_data, normalize=normalize)
+        away_feat_eng = Feature_engineering_v2(away_data, normalize=normalize)
 
     else:
         raise ValueError('---- Error version number ----')
@@ -66,7 +78,12 @@ def update_data_league(params):
         logger.info(f'> Updating {league_name} npm={npm} at date {last_date}')
 
     except Exception as error:
-        return False, error
+        response = {'check':False,
+                    'msg':error}
+        return
 
-    return True, None
+    response = {'check':True,
+                'msg':'Successfull update'}
+
+    return response
 

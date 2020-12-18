@@ -1,13 +1,13 @@
 import pandas as pd
 from core.time_decorator import timing
 from core.file_manager.os_utils import exists
+from scripts.constants.configs import DEFAULT_TEST_SIZE
 
 from scripts.data.preprocessing import (preprocessing_season,
                                         feature_engineering_league)
 from scripts.data import constants as K
 from core.logger.logging import logger
 from urllib.error import HTTPError
-from datetime import datetime
 
 class Database_Manager():
     
@@ -19,7 +19,7 @@ class Database_Manager():
         league_name = self.params['league_name']
         n_prev_match = int(self.params['n_prev_match'])
         train = bool(self.params['train'])
-        test_size = int(self.params['test_size']) if 'test_size' in list(self.params.keys()) else 100
+        test_size = int(self.params['test_size']) if 'test_size' in list(self.params.keys()) else DEFAULT_TEST_SIZE
         league_dir = self.params['league_dir'] if 'league_dir' in list(self.params.keys()) else None
         update = self.params['update'] if 'update' in list(self.params.keys()) else False
 

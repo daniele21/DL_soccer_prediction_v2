@@ -35,7 +35,10 @@ def eval_inference(testloader, feat_eng, model, model_name=None):
 
     return pred_outcome, true_outcome
 
-def thr_analysis(true, pred, thr_list=None, save_dir=None):
+def thr_analysis(true, pred, params):
+    thr_list = params['thr_list'] if 'thr_list' in list(params.keys()) else None
+    save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
+
     assert thr_list is not None and isinstance(thr_list, list)
 
     output_thr = {}
