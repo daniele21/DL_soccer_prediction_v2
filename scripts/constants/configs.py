@@ -1,0 +1,8 @@
+DEFAULT_THR_LIST = [0.5, 0.55, 0.6, 0.65, 0.7, 0.725, 0.75, 0.775, 0.8, 0.825, 0.85, 0.875, 0.9]
+DEFAULT_TEST_SIZE = 100
+
+WINDOWED_DATASET = 'windowed'
+BASE_DATASET = 'base'
+
+NETWORK_V1 = 'network_v1'
+NETWORK_V2 = 'network_v2'
