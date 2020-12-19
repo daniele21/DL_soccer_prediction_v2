@@ -3,9 +3,14 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 import sys
 import numpy as np
+import copy
 
 from scripts.models.base import Base
 from core.logger.logging import logger
+from scripts.networks.lstm_networks import init_weights
+from scripts.utils.saving import save_training_details
+from scripts.visualization.plots import plot_loss
+
 
 class Window_model(Base):
 
@@ -14,11 +19,27 @@ class Window_model(Base):
 
         self.window_size = params['window']
 
-    def _train_one_fold(self, trainloader, n_fold):
+        self.trainloaders = [DataLoader(d,
+                                       batch_size=d.batch_size,
+                                       shuffle=False)  for d in self.trainloader]
+
+        self.evalloaders = [DataLoader(d,
+                                       batch_size=d.batch_size,
+                                       shuffle=False) for d in self.evalloader]
+
+        self.n_folds = len(self.trainloaders)
+
+        self.fold_model = [copy.deepcopy(self.model) for i in range(self.n_folds)]
+        self.optimizers = [params['optimizer'](model.parameters(),
+                                               lr=params['lr']) for model in self.fold_model]
+        self.fold_losses = []
+
+
+    def _train_one_epoch(self):
         losses = []
 
-        # TRAINING ONE FOLD
-        for x_home, x_away, y_home, y_away in trainloader:
+        # TRAINING ONE EPOCH
+        for x_home, x_away, y_home, y_away in self.trainloaders[self.i_fold]:
 
             x_home = torch.Tensor(x_home).to(self.device)
             x_away = torch.Tensor(x_away).to(self.device)
@@ -26,44 +47,24 @@ class Window_model(Base):
             target = torch.cat([y_home, y_away]).to(self.device)
 
             # FORWARDING
-            output, home_out, away_out = self.model(x_home, x_away)
+            output, home_out, away_out = self.fold_model[self.i_fold](x_home, x_away)
 
             # COMPUTING LOSS
             loss = self.loss_function(output, target)
             losses.append(loss.item())
 
             # OPTIMIZATION
-            self.optimizer.zero_grad()
+            self.optimizers[self.i_fold].zero_grad()
             loss.backward()
-            self.optimizer.step()
+            self.optimizers[self.i_fold].step()
 
         return np.mean(losses)
 
-    def _train_one_epoch(self):
-        self.model.train()
-
-        losses = []
-        n_fold = 0
-
-        # WALKING FORWARD TRAINING - TRAINING FOR EACH FOLD
-        for dataset in tqdm(self.trainloader, desc='> Training  \t', file=sys.stdout):
-            n_fold += 1
-            dataloader = DataLoader(dataset,
-                                   batch_size=dataset.batch_size,
-                                   shuffle=False,
-                                   )
-
-            # TRAINING ONE FOLD
-            mean_loss = self._train_one_fold(dataloader, n_fold)
-            losses.append(mean_loss)
-
-        return np.mean(losses)
-
-    def _eval_one_fold(self, evalloader, n_fold):
+    def _evaluate(self):
         losses = []
 
-        # EVALUATING ONE FOLD
-        for x_home, x_away, y_home, y_away in evalloader:
+        # EVALUATING ONE EPOCH
+        for x_home, x_away, y_home, y_away in self.evalloaders[self.i_fold]:
 
             x_home = torch.Tensor(x_home).to(self.device)
             x_away = torch.Tensor(x_away).to(self.device)
@@ -71,7 +72,7 @@ class Window_model(Base):
             target = torch.cat([y_home, y_away]).to(self.device)
 
             # FORWARDING
-            output, home_out, away_out = self.model(x_home, x_away)
+            output, home_out, away_out = self.fold_model[self.i_fold](x_home, x_away)
 
             # COMPUTING LOSS
             loss = self.loss_function(output, target)
@@ -79,28 +80,30 @@ class Window_model(Base):
 
         return np.mean(losses)
 
+    def walk_forward_train(self, epochs, patience=None):
 
-    def _evaluate(self):
-        self.model.eval()
+        for i in tqdm(range(self.n_folds),
+                      desc='> Folds  ',
+                      file=sys.stdout):
 
-        losses = []
-        n_fold = 0
+            self.losses = {'train':[], 'eval':[]}
+            self.epoch = 0
+            self.i_fold = i
 
-        with torch.no_grad():
+            self.train(epochs, patience)
 
-            # WALKING FORWARD TRAINING - EVALUATING FOR EACH FOLD
-            for dataset in tqdm(self.evalloader, desc='> Evaluation  \t', file=sys.stdout):
-                n_fold += 1
-                dataloader = DataLoader(dataset,
-                                        batch_size=dataset.batch_size,
-                                        shuffle=False,
-                                        )
+            self.fold_losses.append(self.losses)
 
-                # TRAINING ONE FOLD
-                mean_loss = self._eval_one_fold(dataloader, n_fold)
-                losses.append(mean_loss)
+            save_training_details(self,
+                                  save_dir=f'{self.save_dir}training_details/',
+                                  filename=f'4-{i}.training_details')
+            plot_loss(self.losses['train'],
+                      self.losses['eval'],
+                      save=self.save,
+                      save_dir=f'{self.save_dir}plot/',
+                      filename=f'plot_loss_{i}.png')
 
-        return np.mean(losses)
+        return self.fold_losses
 
     def train(self, epochs, patience=None):
         super(Window_model, self).train(epochs, patience)
@@ -110,26 +113,29 @@ class Window_model(Base):
 
         assert model_name == 'home' or model_name == 'away', 'ERROR - model predict: WRONG model name. Give "home" or "away"'
 
-        if (model_name == 'home'):
-            logger.info('> Calling Home Network')
-            model = self.model.home_network
-        elif (model_name == 'away'):
-            logger.info('> Calling Away Network')
-            model = self.model.away_network
-        else:
-            raise ValueError('Model - predict: Wrong model name')
+        preds = []
+        for i_fold in range(self.n_folds):
 
-        pred = []
-        logger.info('> Prediction')
+            if (model_name == 'home'):
+                logger.info('> Calling Home Network')
+                field_model = self.fold_model[i_fold].home_network
+            elif (model_name == 'away'):
+                logger.info('> Calling Away Network')
+                field_model = self.fold_model[i_fold].away_network
+            else:
+                raise ValueError('Model - predict: Wrong model name')
 
-        with torch.no_grad():
+            logger.info('> Prediction')
 
-            for x in input_data:
-                x = torch.Tensor(x).to(self.device)
-                out = model(x)
+            with torch.no_grad():
 
-                out = out.squeeze()
+                for x in input_data:
+                    x = torch.Tensor(x).to(self.device)
+                    out = field_model(x)
 
-                pred.append(out.item())
+                    out = out.squeeze()
 
-        return pred
+                    preds.append(out.item())
+
+
+        return np.mean(preds)
