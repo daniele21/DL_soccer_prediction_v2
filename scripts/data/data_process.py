@@ -3,6 +3,7 @@
 from time import time
 import os
 
+from scripts.constants.configs import HOME, AWAY
 from scripts.data import constants as K
 from scripts.data.data_extraction import Database_Manager
 from scripts.data.preprocessing import data_preprocessing
@@ -12,15 +13,7 @@ from scripts.utils.utils import logger
 from core.file_manager.saving import save_object
 
 def extract_data_league(params):
-    """
 
-    Args:
-        params:
-
-    Returns:
-
-    """
-    
     db_manager = Database_Manager(params)
     
     # DATA EXTRACTION
@@ -40,12 +33,21 @@ def generate_dataset(input_data, params):
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
 
     if(int(params['version']) == 1):
-        home_feat_eng = Feature_engineering_v1(home_data, normalize=normalize)
-        away_feat_eng = Feature_engineering_v1(away_data, normalize=normalize)
+        home_feat_eng = Feature_engineering_v1(home_data,
+                                               normalize=normalize,
+                                               field=HOME)
+
+        away_feat_eng = Feature_engineering_v1(away_data,
+                                               normalize=normalize,
+                                               field=AWAY)
 
     elif(int(params['version']) == 2):
-        home_feat_eng = Feature_engineering_v2(home_data, normalize=normalize)
-        away_feat_eng = Feature_engineering_v2(away_data, normalize=normalize)
+        home_feat_eng = Feature_engineering_v2(home_data,
+                                               normalize=normalize,
+                                               field=HOME)
+        away_feat_eng = Feature_engineering_v2(away_data,
+                                               normalize=normalize,
+                                               field=AWAY)
 
     else:
         raise ValueError('---- Error version number ----')
@@ -60,7 +62,7 @@ def generate_dataset(input_data, params):
 
     if(save_dir is not None):
         filepath = f'{save_dir}feat_eng'
-        logger.info(f' > Saving Feat.Eng object at {filepath}')
+        # logger.info(f' > Saving Feat.Eng object at {filepath}')
         save_object(feat_eng, filepath)
     
     return dataloader, feat_eng, in_features
