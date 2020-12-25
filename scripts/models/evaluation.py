@@ -17,8 +17,8 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 from core.file_manager.saving import save_json
+from scripts.constants.configs import DEFAULT_THR_LIST
 from scripts.data.postprocessing import labeling_predictions
-from scripts.models.model_utils import save_evaluation
 from scripts.utils.saving import save_simulation_details
 from scripts.utils.utils import multiply_all_list_elements
 from scripts.visualization.plots import plot_hist, plot_simulation
@@ -36,33 +36,39 @@ def eval_inference(testloader, feat_eng, model, model_name=None):
     return pred_outcome, true_outcome
 
 def thr_analysis(true, pred, params):
-    thr_list = params['thr_list'] if 'thr_list' in list(params.keys()) else None
+    thr_list = params['thr_list'] if 'thr_list' in list(params.keys()) else DEFAULT_THR_LIST
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
 
     assert thr_list is not None and isinstance(thr_list, list)
 
-    output_thr = {}
+    analysis_per_thr = {}
 
     for thr in thr_list:
         pred_df = labeling_predictions(pred, thr, true)
         filtered_pred = pred_df[pred_df['to_bet'] == True]
 
-        tpr = f"{(filtered_pred['true']==1).sum() / len(filtered_pred['pred']):.3f}"
-        support = f"{len(filtered_pred['pred']) / len(pred_df):.2f}"
+        try:
+            tpr = f"{(filtered_pred['true']==1).sum() / len(filtered_pred['pred']):.3f}"
+            support = f"{len(filtered_pred['pred']) / len(pred_df):.2f}"
+        except RuntimeWarning:
+            pass
 
-        output_thr[str(thr)] = {'support': float(support),
+        analysis_per_thr[str(thr)] = {'support': float(support),
                                 'tpr': float(tpr)}
 
-    thr_result = pd.DataFrame(output_thr).transpose()
+    thr_result = pd.DataFrame(analysis_per_thr).transpose()
 
-    thr_dict = thr_result.transpose().to_dict()
     thr_result = thr_result.reset_index().rename(columns={'index':'thr'})
+    thr_dict = {'thr_analysis': [{'thr': thr_result.loc[i,'thr'],
+                                  'tpr': thr_result.loc[i,'tpr'],
+                                  'support': thr_result.loc[i,'support']} for i in thr_result.index]}
 
     if(save_dir is not None):
-        filepath = f'{save_dir}6.thr_analysis.json'
+        filepath = f'{save_dir}6.{params["field"]}_thr_analysis.json'
         save_json(thr_dict, filepath)
+        thr_result.to_csv(f'{save_dir}6.{params["field"]}_thr_analysis.csv', sep=';', decimal=',')
 
-    return thr_result, thr_dict
+    return thr_result, thr_dict, analysis_per_thr
 
 
 def evaluate_results(true, pred, eval_params, plot=True):
@@ -80,6 +86,8 @@ def evaluate_results(true, pred, eval_params, plot=True):
 
     try:
         tpr = (my_score_to_bet['true'] == 1).sum() / (len(my_score_to_bet['pred']))
+    except RuntimeWarning:
+        pass
     except:
         tpr = 'nan'
 
