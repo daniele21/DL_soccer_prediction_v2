@@ -1,6 +1,23 @@
 # -*- coding: utf-8 -*-
 import torch
 import torch.nn as nn
+import numpy as np
+
+from core.str2bool import str2bool
+
+
+def init_weights(module):
+    if isinstance(module, nn.LSTM):
+        module.reset_parameters()
+        # nn.init.normal_(module.weight, mean=0.0, std=0.1)  ## or simply use your layer.reset_parameters()
+    if isinstance(module, nn.Linear):
+        nn.init.normal_(module.weight, mean=0.0, std=np.sqrt(1 / module.in_features))
+        if module.bias is not None:
+            nn.init.zeros_(module.bias)
+    if isinstance(module, nn.Conv1d):
+        nn.init.normal_(module.weight, mean=0.0, std=np.sqrt(4 / module.in_channels))
+        if module.bias is not None:
+            nn.init.zeros_(module.bias)
 
 class LSTM_Network(nn.Module):
     
@@ -8,17 +25,18 @@ class LSTM_Network(nn.Module):
         super(LSTM_Network, self).__init__()
         self.name = name
         self.dataset_type = params['dataset']
+        self.bidirectional = str2bool(params['bidirectional'])
         
-        self.window = params['window']-1 if params['window'] is not None else None
-        torch.manual_seed(params['seed'])
+        # self.window = params['window']-1 if params['window'] is not None else None
+        torch.manual_seed(int(params['seed']))
         
         out_features = params['out_lstm']
         self.lstm = nn.LSTM(input_size = in_features,
                             hidden_size= out_features,
                             num_layers = params['n_lstm_layer'],
-                            bidirectional=params['bidirectional'])
+                            bidirectional=self.bidirectional)
             
-        in_features = out_features * 2 if params['bidirectional'] else in_features
+        in_features = out_features * 2 if self.bidirectional else in_features
         
         out_features = in_features // 2
         self.dense = nn.Linear(in_features, out_features)
@@ -48,14 +66,14 @@ class LSTM_FCN_Network(nn.Module):
         self.name = name
         self.dataset_type = params['dataset']
 
-        self.window = params['window'] - 1 if params['window'] is not None else None
-        torch.manual_seed(params['seed'])
+        # self.window = params['window'] - 1 if params['window'] is not None else None
+        torch.manual_seed(int(params['seed']))
 
-        out_features = params['out_lstm']
+        out_features = int(params['out_lstm'])
         self.lstm = nn.LSTM(input_size=in_features,
                             hidden_size=out_features,
-                            num_layers=params['n_lstm_layer'],
-                            bidirectional=params['bidirectional'])
+                            num_layers=int(params['n_lstm_layer']),
+                            bidirectional=str2bool(params['bidirectional']))
 
 
         in_features = out_features * 2 if params['bidirectional'] else in_features
