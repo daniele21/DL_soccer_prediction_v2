@@ -5,9 +5,20 @@ from scripts.constants.paths import DATA_DIR
 from flask import make_response, jsonify, request, render_template
 from flask import current_app as app
 
+from multiprocessing import Process, set_start_method
+
 
 @app.route('/api/v1/write/league_data', methods=['POST'])
 def create_league_data():
+    """
+    Create and Save league data for some league available
+
+    Method = POST
+    Body: { 'league_name': LEAGUE_NAME,
+            'n_prev_match': NPM,
+          }
+
+    """
 
     # requested params [league_name, npm]
     params = request.json
@@ -21,7 +32,16 @@ def create_league_data():
 
         params['league_dir'] = DATA_DIR
         params['train'] = True
-        league_df, preprocessed_data = extract_data_league(params)
+
+        try:
+            set_start_method('spawn')
+        except RuntimeError:
+            pass
+
+        p = Process(target=extract_data_league, args=(params,))
+        p.start()
+        p.join()
+        # league_df, preprocessed_data = extract_data_league(params)
 
         response = make_response(f'Successfully writing: {league_name.upper()}, npm = {npm}', 200)
 
