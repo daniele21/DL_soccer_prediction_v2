@@ -1,4 +1,6 @@
 import pandas as pd
+
+from core.str2bool import str2bool
 from core.time_decorator import timing
 from core.file_manager.os_utils import exists
 from scripts.constants.configs import DEFAULT_TEST_SIZE
@@ -18,7 +20,7 @@ class Database_Manager():
     def extract_data_league(self):
         league_name = self.params['league_name']
         n_prev_match = int(self.params['n_prev_match'])
-        train = bool(self.params['train'])
+        train = str2bool(self.params['train'])
         test_size = int(self.params['test_size']) if 'test_size' in list(self.params.keys()) else DEFAULT_TEST_SIZE
         league_dir = self.params['league_dir'] if 'league_dir' in list(self.params.keys()) else None
         update = self.params['update'] if 'update' in list(self.params.keys()) else False

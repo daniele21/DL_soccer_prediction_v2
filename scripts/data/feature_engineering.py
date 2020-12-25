@@ -66,7 +66,7 @@ def _norm_scaler(series, one_feature=False):
 
 def _minmax_scaler(series, one_feature=False):
     if(one_feature):
-        scaler = MinMaxScaler(feature_range=(0,1)).fit(series.values.reshape(-1,1))
+        scaler = MinMaxScaler(feature_range=(0, 1)).fit(series.values.reshape(-1,1))
     else:
         scaler = MinMaxScaler(feature_range=(0, 1)).fit(series.values)
 
@@ -200,10 +200,10 @@ class Feature_engineering_v2():
             self.last_match_scaler = _minmax_scaler(data[data.columns[-1]], one_feature=True)
             self.cum_field_points_scaler = _minmax_scaler(data[f'cum_{field}_points'], one_feature=True)
             self.cum_field_goals_scaler = _minmax_scaler(data[f'cum_{field}_goals'], one_feature=True)
-            self.league_points_scaler = _minmax_scaler(data[f'league_points'], one_feature=True)
-            self.league_goals_scaler = _minmax_scaler(data[f'league_goals'], one_feature=True)
-            self.point_diff_scaler = _minmax_scaler(data[f'point_diff'], one_feature=True)
-            self.goals_diff_scaler = _minmax_scaler(data[f'goals_diff'], one_feature=True)
+            self.league_points_scaler = _minmax_scaler(data['league_points'], one_feature=True)
+            self.league_goals_scaler = _minmax_scaler(data['league_goals'], one_feature=True)
+            self.point_diff_scaler = _minmax_scaler(data['point_diff'], one_feature=True)
+            self.goals_diff_scaler = _minmax_scaler(data['goals_diff'], one_feature=True)
             self.bet_scaler = _norm_scaler(data['bet-WD'], one_feature=True)
 
     def transforms(self, field_data, train):
@@ -221,7 +221,9 @@ class Feature_engineering_v2():
         columns = data.columns
         selected_columns = ['team', 'opponent', 'goal_scored', 'goal_conceded',
                             'points', 'f-opponent', 'f-home', 'f-bet-WD',
-                            'bet-WD', 'f-WD']
+                            'bet-WD', 'f-WD', f'cum_{self.field}_points',
+                            f'cum_{self.field}_goals', 'league_points', 'league_goals',
+                            'point_diff', 'goals_diff']
 
         last_n_cols = [col for col in columns if 'last-' in col]
         selected_columns.extend(last_n_cols)

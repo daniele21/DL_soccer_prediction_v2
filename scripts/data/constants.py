@@ -170,9 +170,9 @@ JUPILIER_TEAMS = [BEERSCHOT, GENK, LEUVEN, CERCLE_BRUGGE, ST_TRUIDEN, WAREGEM, W
 
 #%%
 LEAGUE_NAMES = [SERIE_A,
-                PREMIER,
+                # PREMIER,
 #                PREMIER_2,
-                JUPILIER,
+#                 JUPILIER,
                 
                 ]
 
@@ -187,7 +187,7 @@ N_TEAMS = {SERIE_A : 20,
 
 DATA_DIR = 'resources/leagues_data/'
 MODEL_DIR = 'resources/models/'
-SERIE_A_MODEL_NAME = '2020-11-30_17:08:16.400127-serie_a-model_v1.0'
+SERIE_A_MODEL_NAME = '2020-12-05_16:43:00.796603-serie_a-model_v1.0'
 PREMIER_MODEL_NAME = '2020-10-29_10:34:18.765085-premier_league-round=7_v1.0'
 JUPILIER_MODEL_NAME = ''
 

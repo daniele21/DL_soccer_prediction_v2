@@ -3,6 +3,7 @@
 from time import time
 import os
 
+from core.str2bool import str2bool
 from scripts.constants.configs import HOME, AWAY
 from scripts.data import constants as K
 from scripts.data.data_extraction import Database_Manager
@@ -26,8 +27,8 @@ def extract_data_league(params):
 
 def generate_dataset(input_data, params):
 
-    train = bool(params['train'])
-    normalize = bool(params['normalize'])
+    train = str2bool(params['train'])
+    normalize = str2bool(params['normalize'])
     home_data = input_data['home']
     away_data = input_data['away']
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None

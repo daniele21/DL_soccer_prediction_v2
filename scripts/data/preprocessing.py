@@ -5,6 +5,7 @@ from math import ceil
 import os
 from tqdm import tqdm
 
+from core.str2bool import str2bool
 from scripts.data import constants as K
 from scripts.data.data_utils import (search_previous_matches,
                                      search_future_features,
@@ -394,7 +395,7 @@ def _split_teams(league_df, n_prev_match):
 def data_preprocessing(league_df, params):
 
     n_prev_match = int(params['n_prev_match'])
-    train = bool(params['train'])
+    train = str2bool(params['train'])
     test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else 100
     league_dir = params['league_dir'] if 'league_dir' in list(params.keys()) else None
     league_name = params['league_name']
