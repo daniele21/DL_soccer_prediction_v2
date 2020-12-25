@@ -7,7 +7,7 @@ def exists(path):
 
 def ensure_folder(folder):
     if(exists(folder) == False):
-        logger.info(f'> Creating folder at {folder}')
+        logger.info(f'\n> Creating folder at {folder}\n')
         os.makedirs(folder)
 
     return

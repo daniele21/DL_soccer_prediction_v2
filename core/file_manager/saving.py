@@ -12,9 +12,9 @@ def save_json(json_dict, filepath):
 
     return
 
-def save_str_file(content, filepath):
+def save_str_file(content, filepath, mode='a'):
     
-    with open(filepath, 'a') as f:
+    with open(filepath, mode) as f:
         f.write(content)
         f.close()
         
@@ -24,7 +24,7 @@ def save_str_file(content, filepath):
 def save_model(model, filepath):
     
     save_object(model, filepath)
-    print(f'> Saving model at {filepath}')
+    # print(f'> Saving model at {filepath}')
 
     return filepath
 
@@ -32,7 +32,7 @@ def save_model(model, filepath):
 def save_object(my_object, filepath):
     
     torch.save(my_object, filepath)
-    print(f'> Saving object at {filepath}')
+    # print(f'> Saving object at {filepath}')
 
     return filepath
 
