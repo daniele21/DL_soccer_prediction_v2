@@ -1,13 +1,19 @@
 # -*- coding: utf-8 -*-
+import matplotlib
 import matplotlib.pyplot as plt
 
+matplotlib.use('agg')
+
+from core.file_manager.os_utils import ensure_folder
 from scripts.utils.saving import save_simulation_details
 
 
 def plot_loss(train_loss, test_loss,
-              figsize=(7,5), save=True, save_dir=''):
+              figsize=(7,5), save=True,
+              save_dir='', plot_dir=None, filename=None,
+              plot=True):
     
-    plt.figure(figsize=figsize)
+    fig = plt.figure(figsize=figsize)
     plt.title('Model Loss', fontsize=15)
     plt.plot(train_loss, c='r', label='Train')
     plt.plot(test_loss, c='b', label='Eval')
@@ -15,12 +21,19 @@ def plot_loss(train_loss, test_loss,
     plt.legend(loc='best')
     
     if(save):
-        filepath = f'{save_dir}loss_plot.png'
+        ensure_folder(save_dir)
+        filename = 'loss_plot' if filename is None else filename
+        filepath = f'{save_dir}{filename}.png'
         plt.savefig(filepath)
+
+        if(plot_dir is not None):
+            filepath = f'{plot_dir}training_plot.png'
+            plt.savefig(filepath)
+
+    if(plot):
+        plt.show()
     
-    plt.show()
-    
-    return
+    return fig
 
 def plot_aic_bic(aics, bics, figsize=(7,7),
                  save=True, save_dir=''):
@@ -116,15 +129,12 @@ def plot_simulation(simulation_result, params, plot=True):
     data = simulation_result
     cum_gain_list = data[data['cum_gain']!=0]['cum_gain'].to_list()
 
-    # combo = data[f'combo_{n_combo}'].cumsum().fillna(method='bfill')
-    # combo = combo.fillna(method='ffill').to_list()
-
     labels = simulation_result['match'].to_list()
     idxs = range(len(labels))
 
     # PLOTTING
 
-    fig = plt.figure(figsize=(17,7))
+    fig = plt.figure(figsize=(15,8))
     plt.title(title)
 
     plt.plot(idxs, cum_gain_list, label='no combo')
