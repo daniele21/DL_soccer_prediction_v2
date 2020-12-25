@@ -20,14 +20,14 @@ def save_simulation_details(sim_result, params, folder_dir):
 
     # filename = f'5.simulations_details_{field}.txt'
     filename = f'5.simulations_details_{field}_thr={thr}_filter={filter_bet}.json'
-    filepath = f'{folder_dir}/{filename}'
+    filepath = f'{folder_dir}{filename}'
 
     logger.info(f' > Saving training details at {filepath}')
     save_json(sim_result, filepath)
 
     return
 
-def save_params(params, filepath, format='json'):
+def save_params(params, filepath, format='json', verbose=True):
 
     if(format=='json'):
         filepath += '.json'
@@ -51,7 +51,8 @@ def save_params(params, filepath, format='json'):
     else:
         raise ValueError(f'Format is not recognized: provided --> {format}')
 
-    logger.info(f' > Saving params at {filepath}\n')
+    if verbose:
+        logger.info(f' > Saving params at {filepath}\n')
 
     return
 
@@ -86,25 +87,25 @@ def save_soccer_model(model):
     ensure_folder(folder)
     save_model(model, filepath)
 
-    logger.info(f'> Saving checkpoint epoch {model.epoch} at {folder}')
+    if(model.verbose):
+        logger.info(f'> Saving checkpoint epoch {model.epoch} at {folder}')
 
     return filepath
 
 
-def save_training_details(model):
-    filename = '4.training_details'
-    filepath = f'{model.save_dir}/{filename}'
+def save_training_details(model, save_dir, filename=None):
+    filename = '4.training_details' if filename is None else filename
+    ensure_folder(save_dir)
+    filepath = f'{save_dir}/{filename}'
 
     training_details = {'epoch': model.epoch,
                         'train_loss': model.losses['train'][-1],
                         'eval_loss': model.losses['eval'][-1]
                         }
 
-    save_params(training_details, filepath, format='json')
+    save_params(training_details, filepath, format='json', verbose= model.verbose)
 
-    logger.info(f' > Saving training details at {filepath}')
+    # logger.info(f' > Saving training details at {filepath}')
 
-    print(training_details)
-
-    return
+    return training_details
 
