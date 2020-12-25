@@ -51,10 +51,13 @@ def generate_output(matches_df, predictions, thr):
                 sugg_event.loc[i, 'event'] = '1X / X2'
                 sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_1X']) + ' / ' + str(sugg_event.loc[i, 'pred_X2'])
 
-        outcome = sugg_event[['match', 'event', 'prob']]\
-                        .set_index('match')\
-                        .transpose()\
-                        .to_dict()
+        if(len(sugg_event) > 0):
+            outcome = sugg_event[['match', 'event', 'prob']]\
+                            .set_index('match')\
+                            .transpose()\
+                            .to_dict()
+        else:
+            return None
 
     else:
         outcome = outcome_df[['match', '1X', 'pred_1X', 'X2', 'pred_X2']]\
@@ -70,7 +73,8 @@ def real_case_inference(model, params, feat_eng):
     if field is None:
         raise ParameterError('field')
 
-    test_size = len(model.testloader[field]) if model.testloader is not None else DEFAULT_TEST_SIZE
+    # test_size = len(model.testloader[field]) if model.testloader is not None else DEFAULT_TEST_SIZE
+    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else DEFAULT_TEST_SIZE
 
     test_data = generate_test_data(params)
 

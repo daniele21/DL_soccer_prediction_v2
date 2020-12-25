@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
+from scripts.constants.configs import ADAM_OPTIMIZER, BCE_LOSS, CUDA_DEVICE, CPU_DEVICE, BASE_DATASET, WINDOWED_DATASET
 
-from matplotlib import pyplot as plt
-import os
-
-from scripts.utils.utils import logger
+import torch
+from scripts.models.loss import binary_cross_entropy
 
 
 def update_lr(model, lr):
@@ -12,43 +11,32 @@ def update_lr(model, lr):
         
     return
 
-    
-def save_evaluation(tpr, pos, total_matches, threshold, params):
-    
-    filename = '3.model_details.txt'
-    filepath = f'{os.environ["CKP_MODEL_PATH"]}{params["name"]}/{filename}'
-    
-#    content = f'________________________ {params["name"]} ________________________\n\n'
-    content = f'\n\n> Threshold: {threshold}\n'
-    content += f'> Home TPR: {tpr["home"]:.3f} over {pos["home"]}/{total_matches} matches ({pos["home"]/(total_matches):.3f})\n'
-    content += f'> Away TPR: {tpr["away"]:.3f} over {pos["away"]}/{total_matches} matches ({pos["away"]/(total_matches):.3f})\n'
-    
-    logger.info(f' > Saving evaluation test results at {filepath}')
-    with open(filepath, 'a') as f:
-        f.write(content)
-        f.close()
 
+def get_optimizer_from_name(optim_name):
 
-def find_home_teams(decoded_testloader):
-    
-    home = decoded_testloader['home']
-    away = decoded_testloader['away']
-    
-    home_h_teams = home[home['home'] == 1]
-    home_a_teams = away[away['home'] == 1]
-    
-    home_teams = []
-    home_teams.append(home_h_teams['team'].to_list())
-    home_teams.append(home_a_teams['team'].to_list())
-    
-    return home_teams
+    if(optim_name == ADAM_OPTIMIZER):
+        return torch.optim.Adam
 
+    else:
+        raise ValueError(f'Optimizer not found: {optim_name}')
 
-    
-    
-    
-    
-    
+def get_loss_from_name(loss_name):
+
+    if(loss_name == BCE_LOSS):
+        return binary_cross_entropy()
+
+    else:
+        raise ValueError(f'Loss function not found: {loss_name}')
+
+def get_device_from_name(device_name):
+
+    if(device_name == CUDA_DEVICE):
+        return torch.device('cuda:0')
+    elif(device_name == CPU_DEVICE):
+        return torch.device('cpu:0')
+    else:
+        raise ValueError(f'Device not found: {device_name}')
+
     
     
     
