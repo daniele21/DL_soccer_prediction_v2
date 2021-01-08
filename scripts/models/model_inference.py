@@ -4,6 +4,7 @@ from scripts.data.data_process import extract_data_league
 from scripts.data.datasets import create_test_dataloader
 from scripts.data.postprocessing import labeling_predictions, generate_outcome
 from scripts.exceptions.param_exc import ParameterError
+from scripts.utils.checker import check_data_params
 
 
 def model_inference(test_data, feat_eng, model, model_name=None, train=False):
@@ -26,12 +27,14 @@ def model_inference(test_data, feat_eng, model, model_name=None, train=False):
 def generate_test_data(league_params):
 
     league_params['train'] = False
+    league_params['test_size'] = 0
+    league_params['update'] = False
 
     league_csv, input_data = extract_data_league(league_params)
 
     return input_data
 
-def generate_output(matches_df, predictions, thr):
+def generate_output(matches_df, predictions, thr=None):
 
     outcome_df = generate_outcome(matches_df, predictions, thr)
 
@@ -52,10 +55,14 @@ def generate_output(matches_df, predictions, thr):
                 sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_1X']) + ' / ' + str(sugg_event.loc[i, 'pred_X2'])
 
         if(len(sugg_event) > 0):
-            outcome = sugg_event[['match', 'event', 'prob']]\
+            outcome = sugg_event.drop(['outcome_1X', 'outcome_X2', 'home', 'away'], axis=1)\
                             .set_index('match')\
                             .transpose()\
                             .to_dict()
+            # outcome = sugg_event[['match', 'event', 'prob']]\
+            #                 .set_index('match')\
+            #                 .transpose()\
+            #                 .to_dict()
         else:
             return None
 
@@ -68,14 +75,12 @@ def generate_output(matches_df, predictions, thr):
     return outcome
 
 def real_case_inference(model, params, feat_eng):
-    field = params['field'] if 'field' in list(params.keys()) else None
-
-    if field is None:
-        raise ParameterError('field')
+    field = params['field']
 
     # test_size = len(model.testloader[field]) if model.testloader is not None else DEFAULT_TEST_SIZE
     test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else DEFAULT_TEST_SIZE
 
+    params = check_data_params(params)
     test_data = generate_test_data(params)
 
     test_set = test_data[field][-test_size:]

@@ -11,6 +11,9 @@ from scripts.networks.lstm_networks import init_weights
 from scripts.utils.saving import save_training_details
 from scripts.visualization.plots import plot_loss
 
+from multiprocessing import Process
+
+
 
 class Window_model(Base):
 
@@ -138,4 +141,4 @@ class Window_model(Base):
                     preds.append(out.item())
 
 
-        return np.mean(preds)
+        return np.mean(preds, axis=0)

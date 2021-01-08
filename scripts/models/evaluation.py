@@ -17,6 +17,7 @@ from matplotlib import pyplot as plt
 import pandas as pd
 
 from core.file_manager.saving import save_json
+from core.str2bool import str2bool
 from scripts.constants.configs import DEFAULT_THR_LIST
 from scripts.data.postprocessing import labeling_predictions
 from scripts.utils.saving import save_simulation_details
@@ -38,6 +39,7 @@ def eval_inference(testloader, feat_eng, model, model_name=None):
 def thr_analysis(true, pred, params):
     thr_list = params['thr_list'] if 'thr_list' in list(params.keys()) else DEFAULT_THR_LIST
     save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
+    field = params['field']
 
     assert thr_list is not None and isinstance(thr_list, list)
 
@@ -47,26 +49,27 @@ def thr_analysis(true, pred, params):
         pred_df = labeling_predictions(pred, thr, true)
         filtered_pred = pred_df[pred_df['to_bet'] == True]
 
-        try:
+        if(len(filtered_pred) > 0):
             tpr = f"{(filtered_pred['true']==1).sum() / len(filtered_pred['pred']):.3f}"
             support = f"{len(filtered_pred['pred']) / len(pred_df):.2f}"
-        except RuntimeWarning:
-            pass
+        else:
+            tpr = 'nan'
+            support = 0
 
         analysis_per_thr[str(thr)] = {'support': float(support),
-                                'tpr': float(tpr)}
+                                      'tpr': float(tpr)}
 
     thr_result = pd.DataFrame(analysis_per_thr).transpose()
 
     thr_result = thr_result.reset_index().rename(columns={'index':'thr'})
-    thr_dict = {'thr_analysis': [{'thr': thr_result.loc[i,'thr'],
-                                  'tpr': thr_result.loc[i,'tpr'],
-                                  'support': thr_result.loc[i,'support']} for i in thr_result.index]}
+    thr_dict = {field: [{'thr': thr_result.loc[i,'thr'],
+                         'tpr': thr_result.loc[i,'tpr'],
+                         'support': thr_result.loc[i,'support']} for i in thr_result.index]}
 
     if(save_dir is not None):
-        filepath = f'{save_dir}6.{params["field"]}_thr_analysis.json'
+        filepath = f'{save_dir}6.{field}_thr_analysis.json'
         save_json(thr_dict, filepath)
-        thr_result.to_csv(f'{save_dir}6.{params["field"]}_thr_analysis.csv', sep=';', decimal=',')
+        thr_result.to_csv(f'{save_dir}6.{field}_thr_analysis.csv', sep=';', decimal=',')
 
     return thr_result, thr_dict, analysis_per_thr
 
@@ -76,20 +79,20 @@ def evaluate_results(true, pred, eval_params, plot=True):
 
     pred_df = labeling_predictions(pred, thr, true)
 
+    if(thr is None):
+        return pred_df, None, None
+
     my_score = pred_df
-    right_score = my_score[my_score.true == 1]
+    right_score = my_score[my_score['true'] == True]
     # bad_choise = my_choise[my_choise.true == 0]
 
     my_score_to_bet = my_score[my_score['to_bet'] == True]
     auc, opt_thr = compute_roc(pred_df['true'].to_list(),
                                pred_df['pred'].to_list())
-
-    try:
+    if(len(my_score_to_bet) > 0):
         tpr = (my_score_to_bet['true'] == 1).sum() / (len(my_score_to_bet['pred']))
-    except RuntimeWarning:
-        pass
-    except:
-        tpr = 'nan'
+    else:
+        tpr = np.nan
 
     outcome = {'thr':thr,
                'auc':auc,
@@ -114,34 +117,42 @@ def compute_roc(true_outcome, pred_outcome, info='', plot=False):
 
     return roc_auc, opt_threshold
 
-def _select_match_to_bet(test_data, params, combo=None):
+def _select_match_to_bet(match_data, params, combo=None):
     '''
         SELECT JUST THE POSITIVE PREDICTIONS
     '''
 
     filter_bet = params['filter_bet']
     money_bet = params['money_bet']
-    n_combo = combo if combo is not None else 3
+    n_combo = combo if combo is not None else None
 
-    matches = []
+    n_matches, matches = [], []
     roi_list = []
     result_list = []
     cum_gain_list = []
     combo_buffer = []
-    combo_list = []
+    combo_reward = {'cum_money_bet':[],
+                    'money_bet':[],
+                    'list':[],
+                    'cum_list':[]}
+    # combo_list = []
+    # cum_combo_list = []
 
-    data = test_data.reset_index(drop=True)
+    data = match_data.reset_index(drop=True)
     data = data[(data['to_bet'] == True) & (data['bet'] > filter_bet) ]
 
     for i_row in data.index:
         row = data.loc[i_row]
         bet_WD = row['bet']
-        true_result = bool(row['true-WD'])
-        match = f'{i_row} | {row["match"]}'
+        true_WD = bool(row['true-WD'])
+        # match = f'{i_row} | {row["match"]}'
+        match = row["match"]
+
+        matches.append(match)
+        n_matches.append(i_row)
 
         # JUST POSITIVE CASES --> WHERE I WANT TO BET WD
-
-        if(true_result):
+        if(true_WD):
             gain = (money_bet * bet_WD) - money_bet
             result_list.append('Win')
             combo_buffer.append(bet_WD)
@@ -152,22 +163,27 @@ def _select_match_to_bet(test_data, params, combo=None):
             combo_buffer.append(-1)
 
         roi_list.append(gain)
-        matches.append(match)
         cum_gain_list.append(sum(roi_list))
 
         if(len(combo_buffer) == n_combo):
-            combo_list.append(money_bet * multiply_all_list_elements(combo_buffer))
+            combo_reward['list'].append(money_bet * multiply_all_list_elements(combo_buffer))
+            combo_reward['money_bet'].append(money_bet)
             combo_buffer = []
         else:
-            combo_list.append(np.nan)
+            combo_reward['list'].append(np.nan)
+            combo_reward['money_bet'].append(np.nan)
+
+        combo_reward['cum_list'].append(pd.Series(combo_reward['list']).sum())
+        combo_reward['cum_money_bet'].append(pd.Series(combo_reward['money_bet']).sum())
 
     data['outcome'] = result_list
     data['roi'] = roi_list
     # data[f'combo_{n_combo}'] = combo_list
     data['cum_gain'] = cum_gain_list
     data['match'] = matches
+    data['n_match'] = n_matches
     
-    return data, combo_list
+    return data, combo_reward
 
 def computing_test_outcome(testloader, feat_eng, pred, params):
     

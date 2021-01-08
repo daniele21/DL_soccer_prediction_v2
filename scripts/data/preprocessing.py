@@ -396,10 +396,10 @@ def data_preprocessing(league_df, params):
 
     n_prev_match = int(params['n_prev_match'])
     train = str2bool(params['train'])
-    test_size = int(params['test_size']) if 'test_size' in list(params.keys()) else 100
-    league_dir = params['league_dir'] if 'league_dir' in list(params.keys()) else None
+    test_size = int(params['test_size'])
+    league_dir = params['league_dir']
     league_name = params['league_name']
-    update = params['update'] if 'update' in list(params.keys()) else False
+    update = params['update']
 
     data = league_df.copy(deep=True)
 
@@ -461,7 +461,7 @@ def get_last_round(test_data):
     
 def fill_inference_matches(test_data, matches_dict):
 
-    home, away = matches_dict['home'], matches_dict['away']
+    home, away = matches_dict['home_teams'], matches_dict['away_teams']
     odds_1x, odds_x2 = matches_dict['1X_odds'], matches_dict['X2_odds'],
 
     home_matches = _fill_per_field(test_data, home, away, odds_1x, f_home=1)
@@ -484,7 +484,7 @@ def _fill_per_field(test_data, field_teams, opponent_teams, odds, f_home):
             data = test_data[field]
             team_df = data[data['team'] == team].iloc[-1:]
 
-            if(team_df['f-opponent'].isnull().values[0]):
+            if(len(team_df['f-opponent'].isnull() >0)):
                 idx = team_df.index
                 opponent = opponent_teams[i]
                 odd = odds[i]

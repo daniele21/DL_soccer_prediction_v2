@@ -14,122 +14,6 @@ from scripts.utils.utils import spent_time, logger
 from scripts.models.checkpoint import checkpoint
 from scripts.visualization.tensorboard import tb_update_loss, writer
 
-
-
-# class Base():
-#
-#     def __init__(self, network, params, dataloader):
-#
-#         self.name = params['name']
-#         self.device = params['device']
-#         self.model = network.to(self.device)
-#         self.trainloader = dataloader['train']
-#         self.evalloader = dataloader['eval']
-#         self.testloader = dataloader['test'] if 'test' in list(dataloader.keys()) else None
-#
-#         self.optimizer = params['optimizer'](self.model.parameters(),
-#                                              lr=params['lr'])
-#         self.loss_function = params['loss']
-#
-#         self.epoch = 0
-#         self.losses = {'train': [],
-#                        'eval': []}
-#
-#         # Visualization
-#         self.plot_type = params['plot_type'] if 'plot_type' in list(params.keys()) else 'pyplot'
-#         self.plot_freq = params['plot_freq']
-#
-#         self.seed = params['seed']
-#
-#         self.save_dir = params['save_dir']
-#         self.save = True if self.save_dir is not None else False
-#
-#         self.verbose = bool(params['verbose']) if 'verbose' in list(params.keys()) else True
-#
-#         # REPRODUCIBILITY
-#         np.random.seed(self.seed)
-#         torch.manual_seed(self.seed)
-#
-#     def _train_one_epoch(self):
-#         pass
-#
-#     def _evaluate(self):
-#         pass
-#
-#     def train(self, epochs, patience=None):
-#         start_epoch = self.epoch
-#         end_epoch = self.epoch + int(epochs)
-#
-#         curr_patience = 0
-#
-#         for epoch in range(start_epoch, end_epoch):
-#
-#             # print(f'\n> Epoch {epoch + 1}/{end_epoch}')
-#
-#             # TRAINING STEP
-#             start = time()
-#             train_loss = self._train_one_epoch()
-#
-#             self.losses['train'].append(train_loss)
-#
-#             # EVALUATION STEP
-#             eval_loss = self._evaluate()
-#             end = time()
-#             self.losses['eval'].append(eval_loss)
-#
-#             if(self.verbose == True):
-#                 print(self.verbose)
-#                 exit(-1)
-#                 print(f'> Time Spent:     {spent_time(start, end)}')
-#                 print(f'> Training Loss:   {train_loss:.5f}')
-#                 print(f'> Evaluation Loss: {eval_loss:.5f}')
-#                 print('')
-#
-#                 # TENSORBOARD plot
-#                 if (self.plot_type == 'tb'):
-#                     tb_update_loss(train_loss, eval_loss, epoch)
-#
-#                 # PYPLOT plot
-#                 if (epoch != 0 and self.plot_freq is not None and
-#                         epoch % self.plot_freq == 0 and
-#                         self.plot_type == 'pyplot'):
-#                     plot_loss(self.losses['train'],
-#                               self.losses['eval'],
-#                               save=self.save,
-#                               save_dir=f'{self.save_dir}')
-#
-#             if (self.save):
-#                 # CHECKPOINT
-#                 ckp_path = checkpoint(self)
-#
-#                 if (ckp_path is None):
-#                     curr_patience += 1
-#                     print(f'> Patience Updated: {curr_patience}')
-#                 else:
-#                     curr_patience = 0
-#             #                print(f'> Patience Updated: {curr_patience}')
-#             #                    best_ckp_path = ckp_path
-#
-#             # EARLY STOPPING
-#             if (patience is not None and curr_patience >= patience):
-#                 logger.info(' > Early Stopping: Patience Completed')
-#                 break
-#
-#             self.epoch += 1
-#
-#         plot_loss(self.losses['train'],
-#                   self.losses['eval'],
-#                   save=self.save,
-#                   save_dir=f'{self.save_dir}/'
-#                   )
-#
-#         if (self.plot_type == 'tb'):
-#             writer.close()
-#
-#     def predict(self, input_data, field):
-#         pass
-#
-
 class Base_Model():
     
     def __init__(self, network, params, dataloader):
@@ -165,6 +49,16 @@ class Base_Model():
         # REPRODUCIBILITY
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
+
+        # EARLY STOPPING
+        self.es_patience = params['es_patience'] if 'es_patience' in list(params.keys()) else 0.005
+
+        # PRODUCTION PARAMS
+        self.production = False
+
+        if(len(self.evalloader) == 0):
+            self.production = str2bool(params['active']) and params['phase'] == 'final'
+            self.stop_loss = float(params['stop_loss'])
         
     def _train_one_epoch(self):
         self.model.train()
@@ -244,10 +138,13 @@ class Base_Model():
                 self.save_ckp()
                 
             # EARLY STOPPING
-            if(self.early_stopping(patience)):
+            if(self.early_stopping(patience) and not self.production):
                 break
                 
             self.epoch += 1
+
+            if(self.production_stop_loss(train_loss)):
+                break
 
         plot_loss(self.losses['train'],
                   self.losses['eval'],
@@ -276,7 +173,6 @@ class Base_Model():
             raise ValueError('Model - predict: Wrong model name')
 
         pred = []
-        # logger.info('> Prediction')
 
         with torch.no_grad():
 
@@ -289,6 +185,16 @@ class Base_Model():
                 pred.append(out.item())
 
         return pred
+
+    def production_stop_loss(self, train_loss):
+
+        if(self.production):
+            if(train_loss < self.stop_loss):
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def print_epoch_result(self, start, end, train_loss, eval_loss, epoch, end_epoch):
         print(f'\n> Epoch {epoch + 1}/{end_epoch}')
@@ -317,17 +223,19 @@ class Base_Model():
     def save_ckp(self):
         # CHECKPOINT
         #                best_ckp_path = None
-        ckp_path = checkpoint(self)
+        ckp_path = checkpoint(self) if not self.production else checkpoint(self, early_stopping=False)
 
         if (ckp_path is None):
             self.curr_patience += 1
             print(f'> Patience Updated: {self.curr_patience}')
         else:
-            curr_patience = 0
+            self.curr_patience = 0
 
     def early_stopping(self, patience):
 
-        if (patience is not None and self.curr_patience >= patience):
+        if (patience is not None and
+                self.curr_patience >= patience and
+                    self.epoch > 1):
             if(self.verbose):
                 logger.info(' > Early Stopping: Patience Completed')
             stop = True

@@ -73,6 +73,7 @@ def update_data_league(params):
     npm = params['n_prev_match']
     params['train'] = True
     params['update'] = True
+    params['test_size'] = 0
 
     try:
         league_csv, input_data = extract_data_league(params)
@@ -83,7 +84,7 @@ def update_data_league(params):
     except Exception as error:
         response = {'check':False,
                     'msg':error}
-        return
+        return response
 
     response = {'check':True,
                 'msg':'Successfull update'}

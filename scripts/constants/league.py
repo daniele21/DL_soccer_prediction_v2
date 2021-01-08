@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #%% SERIE_A
+
 SERIE_A = 'serie_a'
 
 SERIE_A_PATH = ['https://www.football-data.co.uk/mmz4281/1011/I1.csv',
@@ -89,7 +90,7 @@ PREMIER_TEAMS = [LIVERPOOL, WEST_HAM, BURNLEY, CRYSTAL_PALACE, LEEDS, WEST_BROM,
 #%%
 PREMIER_2 = 'premier_2'
 
-PREMIER_PATH = ['https://www.football-data.co.uk/mmz4281/1011/E1.csv',
+PREMIER_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/E1.csv',
                 'https://www.football-data.co.uk/mmz4281/1112/E1.csv',
                 'https://www.football-data.co.uk/mmz4281/1213/E1.csv',
                 'https://www.football-data.co.uk/mmz4281/1314/E1.csv',
@@ -168,19 +169,203 @@ JUPILIER_TEAMS = [BEERSCHOT, GENK, LEUVEN, CERCLE_BRUGGE, ST_TRUIDEN, WAREGEM, W
                   ANDERLECHT, CHARLEROI, EUPEN, CLUB_BRUGGE, ST_LIEGI, 
                   KORTRIJK, OOSTENDE, MECHELEN, GENT, MOUSCRON, ANTWERP]
 
+# LIGUE 1
+
+LIGUE_1 = 'ligue_1'
+
+LIGUE_1_PATH = ['https://www.football-data.co.uk/mmz4281/1011/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1112/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1213/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1314/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1415/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1516/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1617/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1718/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1819/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/1920/F1.csv',
+                'https://www.football-data.co.uk/mmz4281/2021/F1.csv']
+
+MONACO = 'Monaco'
+MARSIGLIA = 'Marsiglia'
+ANGERS = 'Angers'
+BREST = 'Brest'
+DIJON = 'Dijon'
+MONTPELLIER = 'Montpellier'
+NIZZA = 'Nizza'
+LENS = 'Lens'
+LILLA = 'Lilla'
+LORIENT = 'Lorient'
+STRASBURGO = 'Strasburgo'
+PARIS_SG = 'Paris SG'
+LIONE = 'Lione'
+NANTES = 'Nantes'
+#AMIENS = 'Amiens'
+BORDEAUX = 'Bordeaux'
+METZ = 'Metz'
+NIMES = 'Nimes'
+#TOULOUSE = 'Toulouse'
+ST_ETIENNE = 'St Etienne'
+REIMS = 'Reims'
+RENNES = 'Rennes'
+
+LIGUE_1_TEAMS = [ANGERS, BORDEAUX, BREST, DIJON, LENS, LILLA, LIONE, LORIENT, MARSIGLIA, METZ,
+                 MONACO, MONTPELLIER, NANTES, NIMES, NIZZA, PARIS_SG, REIMS, RENNES, ST_ETIENNE, STRASBURGO]
+
+
+# EREDIVISIE
+EREDIVISIE = 'eredivisie'
+
+EREDIVISIE_PATH = ['https://www.football-data.co.uk/mmz4281/1011/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1112/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1213/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1314/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1415/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1516/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1617/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1718/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1819/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/1920/N1.csv',
+                     'https://www.football-data.co.uk/mmz4281/2021/N1.csv']
+
+ZWOLLE = 'Zwolle'
+EMMEN = 'Emmen'
+VITESSE = 'Vitesse'
+TWENTE = 'Twente'
+VENLO = 'Venlo'
+HERACLES = 'Heracles'
+FEYENOORD = 'Feyenoord'
+DEN_HAAG = 'Den Haag'
+AZ = 'AZ'
+SPARTA_ROTTERDAM = 'Sparta Rotterdam'
+GRONINGEN = 'Groningen'
+AJAX = 'Ajax'
+WILLEM_II = 'Willem II'
+SITTARD = 'Sittard'
+HEERENVEEN = 'Heerenveen'
+WAALWIJK = 'Waalwijk'
+UTRECHT = 'Utrecht'
+PSV = 'PSV'
+
+EREDIVISIE_TEAMS = [AJAX, AZ, DEN_HAAG, EMMEN, FEYENOORD, GRONINGEN, HEERENVEEN, HERACLES,
+                    PSV, SITTARD, SPARTA_ROTTERDAM, TWENTE, UTRECHT, VENLO, VITESSE,
+                    WAALWIJK, WILLEM_II, ZWOLLE]
+
+# LIGA
+LIGA = 'liga'
+
+LIGA_PATH = ['https://www.football-data.co.uk/mmz4281/1011/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1112/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1213/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1314/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1415/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1516/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1617/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1718/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1819/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/1920/SP1.csv',
+             'https://www.football-data.co.uk/mmz4281/2021/SP1.csv']
+
+ATH_BILBAO = 'Ath Bilbao'
+CADICE = 'Cadice'
+CELTA = 'Celta Vigo'
+ELCHE = 'Elche'
+HUESCA = 'Huesca'
+VALENCIA = 'Valencia'
+MALLORCA = 'Mallorca'
+LEGANES = 'Leganes'
+VILLARREAL = 'Villarreal'
+ALAVES = 'Alaves'
+ESPANOL = 'Espanol'
+BETIS = 'Betis'
+ATH_MADRID = 'Ath Madrid'
+GRANADA = 'Granada'
+LEVANTE = 'Levante'
+OSASUNA = 'Osasuna'
+REAL_MADRID = 'Real Madrid'
+GETAFE = 'Getafe'
+BARCELLONA = 'Barcelona'
+SIVIGLIA = 'Siviglia'
+REAL_SOCIEDAD = 'Sociedad'
+EIBAR = 'Eibar'
+VALLADOLID = 'Valladolid'
+
+LIGA_TEAMS = [ALAVES, ATH_BILBAO, ATH_MADRID, BARCELLONA, BETIS, CADICE, CELTA,
+              EIBAR, ELCHE, GETAFE, GRANADA, HUESCA, LEVANTE, OSASUNA, REAL_MADRID,
+              REAL_SOCIEDAD, SIVIGLIA, VALENCIA, VALLADOLID, VILLARREAL]
+
+# LIGA_2
+LIGA_2 = 'liga_2'
+
+LIGA_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1112/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1213/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1314/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1415/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1516/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1617/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1718/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1819/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/1920/SP2.csv',
+                 'https://www.football-data.co.uk/mmz4281/2021/SP2.csv']
+
+LUGO = 'Lugo'
+SANTANDER = 'Santander'
+ALMERIA = 'Almeria'
+CARTAGENA = 'Cartagena'
+CASTELLON = 'Castellon'
+ESPANYOL = 'Espanyol'
+ELCHE = 'Elche'
+LOGRONES = 'Logrones'
+MAIORCA = 'Maiorca'
+VALLECANO = 'Vallecano'
+SABADELL = 'Sabadell'
+SARAGOZZA = 'Zaragoza'
+# DEP_LA_CORUNA = 'La Coruna'
+NUMANCIA = 'Numancia'
+GIRONA = 'Girona'
+CADIZ = 'Cadiz'
+LAS_PALMAS = 'Las Palmas'
+ALBACETE = 'Albacete'
+OVIEDO = 'Oviedo'
+MIRANDES = 'Mirandes'
+ALCORON = 'Alcorcon'
+MALAGA = 'Malaga'
+PONFERRADINA = 'Ponferradina'
+GIJON = 'Sp Gijon'
+HUESCA = 'Huesca'
+TENERIFE = 'Tenerife'
+EXTREMADURA = 'Extremadura UD'
+FUENLABRADA = 'Fuenlabrada'
+# RACING_SANTANDER = 'Racing Santander'
+
+LIGA_2_TEAMS = [ALBACETE, ALCORON, ALMERIA, CARTAGENA, CASTELLON, ESPANYOL, FUENLABRADA,
+                GIJON, GIRONA, LAS_PALMAS, LEGANES, LOGRONES, LUGO, MAIORCA, MALAGA, MIRANDES,
+                PONFERRADINA, OVIEDO, SABADELL, SARAGOZZA, TENERIFE, VALLECANO]
+
+#---------------------------------------------------------------------------------------------------------------------------------------------
 #%%
 LEAGUE_NAMES = [SERIE_A,
-                # PREMIER,
-               # PREMIER_2,
-               #  JUPILIER,
-                
+                PREMIER,
+                LIGUE_1,
+                JUPILIER,
+                EREDIVISIE,
+                LIGA,
+                LIGA_2,
                 ]
 
 TEAMS_LEAGUE = {SERIE_A : SERIE_A_TEAMS,
                 PREMIER : PREMIER_TEAMS,
                 JUPILIER: JUPILIER_TEAMS,
+                LIGUE_1: LIGUE_1_TEAMS,
+                EREDIVISIE: EREDIVISIE_TEAMS,
+                LIGA: LIGA_TEAMS,
+                LIGA_2: LIGA_2_TEAMS
                 }
 
 N_TEAMS = {SERIE_A : 20,
            PREMIER : 20,
-           JUPILIER: 18}
+           JUPILIER: 18,
+           LIGUE_1: 20,
+           EREDIVISIE: 18,
+           LIGA: 20,
+           LIGA_2: 22}

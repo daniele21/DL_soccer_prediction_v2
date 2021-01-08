@@ -2,12 +2,12 @@ import pandas as pd
 
 from core.str2bool import str2bool
 from core.time_decorator import timing
-from core.file_manager.os_utils import exists
-from scripts.constants.configs import DEFAULT_TEST_SIZE
+from core.file_manager.os_utils import exists, ensure_folder
 
 from scripts.data.preprocessing import (preprocessing_season,
                                         feature_engineering_league)
 from scripts.data import constants as K
+import scripts.constants.league as L
 from core.logger.logging import logger
 from urllib.error import HTTPError
 
@@ -21,9 +21,9 @@ class Database_Manager():
         league_name = self.params['league_name']
         n_prev_match = int(self.params['n_prev_match'])
         train = str2bool(self.params['train'])
-        test_size = int(self.params['test_size']) if 'test_size' in list(self.params.keys()) else DEFAULT_TEST_SIZE
-        league_dir = self.params['league_dir'] if 'league_dir' in list(self.params.keys()) else None
-        update = self.params['update'] if 'update' in list(self.params.keys()) else False
+        test_size = int(self.params['test_size'])
+        league_dir = self.params['league_dir']
+        update = self.params['update']
 
         logger.info(f'> Extracting {league_name} data: train={train}')
 

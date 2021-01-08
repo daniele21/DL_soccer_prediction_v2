@@ -4,18 +4,13 @@ import pandas as pd
 
 def labeling_predictions(predictions, thr, true_series=None):
     pred_df = pd.DataFrame()
+    pred_df['pred'] = list(predictions)
 
     if true_series is not None:
         pred_df['true'] = true_series.values
 
-    bet_choise_list = []
-
-    for i, pred in enumerate(predictions):
-        bet_choice = True if pred >= thr else False
-        bet_choise_list.append(bet_choice)
-
-    pred_df['pred'] = list(predictions)
-    pred_df['to_bet'] = bet_choise_list
+    if(thr is not None):
+        pred_df['to_bet'] = pred_df['pred'] >= thr
 
     return pred_df
 
@@ -57,6 +52,7 @@ def postprocessing_test_data(test_data, pred_df):
     data['event'] = events
     data['bet'] = bet_odds
     data['pred-WD'] = pred_df['pred'].to_list()
+    data['pred_WD_bet'] = 1 / data['pred-WD']
     data['to_bet'] = pred_df['to_bet'].to_list()
     data['true-WD'] = pred_df['true'].to_list()
 
@@ -84,7 +80,7 @@ def generate_outcome(matches_df, predictions, thr=None):
             opponent = field_df.loc[index]['f-opponent']
             odd = field_df.loc[index]['f-bet-WD']
             pred = pred_list[i]
-            outcome = pred > thr if thr is not None else str(None)
+            outcome = pred > thr if thr is not None else False
 
             row = pd.DataFrame()
 

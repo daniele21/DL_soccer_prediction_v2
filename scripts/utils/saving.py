@@ -22,7 +22,9 @@ def save_simulation_details(sim_result, params, folder_dir):
     filename = f'5.simulations_details_{field}_thr={thr}_filter={filter_bet}.json'
     filepath = f'{folder_dir}{filename}'
 
-    logger.info(f' > Saving training details at {filepath}')
+    if(params['verbose']):
+        logger.info(f' > Saving training details at {filepath}')
+
     save_json(sim_result, filepath)
 
     return
@@ -58,7 +60,7 @@ def save_params(params, filepath, format='json', verbose=True):
 
 
 def save_all_params(save_dir, league_params,
-                    data_params, model_params):
+                    data_params, model_params, production_params=None):
     ensure_folder(save_dir)
 
     filename = '1.league_params'
@@ -72,6 +74,11 @@ def save_all_params(save_dir, league_params,
     filename = '3.model_params'
     filepath = f'{save_dir}{filename}'
     save_params(model_params, filepath, format='json')
+
+    if(production_params is not None):
+        filename = '4.production_params'
+        filepath = f'{save_dir}{filename}'
+        save_params(model_params, filepath, format='json')
 
     logger.info(f'> Saving PARAMS at {save_dir}')
 
@@ -109,3 +116,20 @@ def save_training_details(model, save_dir, filename=None):
 
     return training_details
 
+def save_simulation(simulation_df, params, folder_dir):
+
+    field = params['field']
+    thr = params['thr']
+    filter_bet = params['filter_bet']
+
+    filename = f'simulations_details_{field.upper()}_thr={thr}_filter={filter_bet}.csv'
+    folder_path = f'{folder_dir}simulations/'
+    ensure_folder(folder_path)
+    filepath = f'{folder_path}{filename}'
+
+    if (params['verbose']):
+        logger.info(f' > Saving training details at {filepath}')
+
+    simulation_df.to_csv(filepath, sep=';', decimal=',')
+
+    return

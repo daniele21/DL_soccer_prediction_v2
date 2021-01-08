@@ -2,9 +2,10 @@
 
 import torch
 from torch.utils.data import Dataset, DataLoader
+import pandas as pd
 
 from core.str2bool import str2bool
-from scripts.constants.configs import BASE_DATASET, WINDOWED_DATASET, DEFAULT_TEST_SIZE, DEFAULT_EVAL_SIZE
+from scripts.constants.configs import BASE_DATASET, WINDOWED_DATASET, DEFAULT_TEST_SIZE, DEFAULT_EVAL_SIZE, FINAL_PHASE
 from scripts.data.dataset_utils import windowed_dataset_split
 
 
@@ -141,7 +142,10 @@ class Windowed_Soccer_Dataset(Dataset):
         return torch.Tensor(data.values)
 
     def last_n_event(self):
-        return list(self.x['home'].index)[-1]
+        if(len(self.x['home']) > 0):
+            return list(self.x['home'].index)[-1]
+        else:
+            return 0
 
     def __len__(self):
         return len(self.x['home'])
@@ -193,12 +197,18 @@ def create_training_dataloader(input_data, params):
     return dataloader, in_features
 
 def windowed_dataset(data, params):
+    if('active' in list(params.keys()) and 'phase' in list(params.keys())):
+        production = str2bool(params['active']) and params['phase'] == FINAL_PHASE
+    else:
+        production = False
+
     train_params = {'train': True,
                     'batch_size': params['batch_size']}
     eval_params = {**train_params}
     eval_params['train'] = False
 
     test_size = params['test_size'] if 'test_size' in list(params.keys()) else DEFAULT_TEST_SIZE
+    data_slice = slice(-test_size) if test_size >0 else slice(None)
 
     data_size = len(data['home'])
     splitter = windowed_dataset_split(data_size, params)
@@ -210,15 +220,22 @@ def windowed_dataset(data, params):
                       'away': []}
 
     for field in ['home', 'away']:
-        data[field] = data[field].iloc[:-test_size]
+        i_fold = 1
+        data[field] = data[field].iloc[data_slice]
         for train_index, eval_index in splitter.split(data[field]):
-            train_slice, eval_slice = slice(train_index[0], train_index[-1]), slice(eval_index[0], eval_index[-1])
+            if(production and i_fold==n_folds):
+                train_slice, eval_slice = slice(train_index[0], None), slice(0)
+            else:
+                train_slice, eval_slice = slice(train_index[0], train_index[-1]), \
+                                          slice(eval_index[0], eval_index[-1])
 
             train_set = data[field].iloc[train_slice]
             eval_set = data[field].iloc[eval_slice]
 
             train_set_folds[field].append(train_set)
             eval_set_folds[field].append(eval_set)
+
+            i_fold += 1
 
     dataset = {'train': [],
                'eval': []}
@@ -249,23 +266,15 @@ def base_dataset(data, params):
     train_size = int(split_size * (len(data['home']) - test_size))
     valid_size = (len(data['home']) - train_size - test_size)
 
-    # if(test_size is None):
-    #     valid_size = int((2/3) * valid_size) if test_set == True else valid_size
-    #     test_size = int((1/3) * (len(data['home']) - train_size)) if test_set == True else None
-    # else:
-    #     valid_size = valid_size - test_size
-
     train_data, valid_data, test_data = {}, {}, {}
 
     train_data['home'] = data['home'].iloc[: train_size]
     train_data['away'] = data['away'].iloc[: train_size]
 
     if (split_size == 1):
-        split = 0.15
-        valid_size = int(len(data['home']) * split)
 
-        valid_data['home'] = data['home'].iloc[-valid_size:]
-        valid_data['away'] = data['away'].iloc[-valid_size:]
+        valid_data['home'] = pd.DataFrame()
+        valid_data['away'] = pd.DataFrame()
 
     else:
         valid_data['home'] = data['home'].iloc[train_size: train_size + valid_size]

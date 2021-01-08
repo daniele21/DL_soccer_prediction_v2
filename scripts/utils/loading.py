@@ -38,27 +38,31 @@ def _load_model_config(paths):
     return model, config
 
 def load_configs(league_name):
-    model_path = K.MODEL_PATH[league_name]
-    data_config_path = K.DATA_PARAMS[league_name]
-    league_config_path = K.LEAGUE_PARAMS[league_name]
-    model_config_path = K.MODEL_PARAMS[league_name]
-    feat_eng_path = K.FEAT_ENG[league_name]
+    try:
+        model_path = K.MODEL_PATH[league_name]
+        data_config_path = K.DATA_PARAMS[league_name]
+        league_config_path = K.LEAGUE_PARAMS[league_name]
+        model_config_path = K.MODEL_PARAMS[league_name]
+        feat_eng_path = K.FEAT_ENG[league_name]
 
-    model = load_model(model_path)
-    logger.info(f'\n> Loading Model: {model_path}')
+        model = load_model(model_path)
+        logger.info(f'\n> Loading Model: {model_path}')
 
-    model_config = load_json(model_config_path)
-    data_config = load_json(data_config_path)
-    league_config = load_json(league_config_path)
-    logger.info(f'\n> Loading Params')
+        model_config = load_json(model_config_path)
+        data_config = load_json(data_config_path)
+        league_config = load_json(league_config_path)
+        logger.info(f'\n> Loading Params')
 
-    feat_eng = load_object(feat_eng_path)
-    logger.info(f'\n> Loading Feature Engineering object')
+        feat_eng = load_object(feat_eng_path)
+        logger.info(f'\n> Loading Feature Engineering object')
 
-    config = {'data': data_config,
-              'league': league_config,
-              'feat_eng': feat_eng,
-              'model': model_config}
+        config = {'data': data_config,
+                  'league': league_config,
+                  'feat_eng': feat_eng,
+                  'model': model_config}
+
+    except:
+        model, config = None, None
 
     return model, config
 

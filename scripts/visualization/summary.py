@@ -14,16 +14,16 @@ def show_summary(summary):
     result_str += f'> Threshold:        {config["thr"]}' + '\n'
     result_str += f'> Filter bet:       {config["filter_bet"]}' + '\n'
     result_str += f'> Bet per match:    {config["bet_money"]} €' + '\n\n'
-    result_str += f'> Support:   {outcome["support"]}' + '\n'
-    result_str += f'> TPR:       {outcome["tpr"]}' + '\n'
+    result_str += f'> Support:   {outcome["support"]:.2f}' + '\n'
+    result_str += f'> TPR:       {outcome["tpr"]:.2f}' + '\n'
     result_str += f'> Matches:   {outcome["matches"]}' + '\n'
     result_str += f'> Wins:      {outcome["wins"]}' + '\n'
     result_str += f'> Losses:    {outcome["losses"]}' + '\n\n'
-    result_str += f'> Gain:       {reward["gain"]:.2f} \t({reward_perc["gain"]*100:.1f} %)' + '\n'
+    result_str += f'> Gain:       {reward["gain"][-1]:.2f} \t({reward_perc["gain"][-1]*100:.1f} %)' + '\n'
     i = 2
     for key in reward:
         if('combo' in key):
-            result_str += f'> Combo x{i}:   {reward[key]:.2f}  \t({reward_perc[key] * 100:.1f} %)' + '\n'
+            result_str += f'> Combo x{i}:   {reward[key][-1]:.2f}  \t({reward_perc[key][-1] * 100:.1f} %)' + '\n'
             i += 1
 
     # print('---------- Summary ----------')
@@ -65,15 +65,9 @@ def summary_dataframe(summary):
     # reward = summary['reward']
     reward_perc = summary['reward_perc']
 
-    summary_dict = {}
-    for key in config:
-        summary_dict[key] = config[key]
-    for key in outcome:
-        summary_dict[key] = outcome[key]
-    for key in reward_perc:
-        summary_dict[key] = reward_perc[key]
+    summary_df = pd.DataFrame({**config, **outcome, **reward_perc})
 
-    return pd.DataFrame(summary_dict, index=[0])
+    return summary_df
 
 
 
