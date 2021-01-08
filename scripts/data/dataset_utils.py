@@ -1,4 +1,4 @@
-from sklearn.model_selection import TimeSeriesSplit
+# from sklearn.model_selection import TimeSeriesSplit
 import numpy as np
 from scripts.constants.configs import DEFAULT_EVAL_SIZE
 
@@ -15,18 +15,23 @@ def windowed_dataset_split(data_size, params):
                          'max_train_size':  int
 
     Returns:
-        splitter: TimeSeriesSplit (from sklearn.model_selection)
+        train_indexes  list
+        test_indexes:  list
     """
 
     window = params['window_size']
     eval_size = params['eval_size'] if 'eval_size' in list(params.keys()) else DEFAULT_EVAL_SIZE
-    max_train_size = params['max_train_size'] if 'max_train_size' in list(params.keys()) else window # ~380 (una stagione)
-    n_splits = 5 if 'n_splits' not in list(params.keys()) else params['n_splits']
+    max_train_size = params['max_train_size'] if 'max_train_size' in list(params.keys()) else None # ~380 (una stagione)
+    n_splits = None if 'n_splits' not in list(params.keys()) else params['n_splits']
+    gap = params['gap'] if 'gap' in list(params.keys()) else None
+    plot = params['plot'] if 'plot' in (params.keys()) else False
 
 
-    splitter = TimeSeriesSplit(n_splits=n_splits,
-                               max_train_size=max_train_size,
-                               test_size=eval_size)
+    # splitter = TimeSeriesSplit(n_splits=n_splits,
+    #                            max_train_size=max_train_size,
+    #                            test_size=eval_size)
+
+    splitter = TimeSeriesSplitter(window, max_train_size, eval_size, n_splits, gap)
 
     return splitter
 
