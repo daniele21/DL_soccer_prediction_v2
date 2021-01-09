@@ -5,6 +5,7 @@ from tqdm import tqdm
 from copy import deepcopy
 from torch.multiprocessing import Process, set_start_method
 
+from scripts.constants.configs import HOME, AWAY
 from scripts.models.base import Base_Model
 from scripts.models.model_utils import get_device_from_name
 from scripts.utils.loading import load_model
@@ -80,27 +81,36 @@ class K_fold_model():
         return
 
 
-    def predict(self, testloader, model_name=None):
-        model_name = str(model_name).lower()
+    def predict(self, testloader, field=None):
+        """
+        Inference with all models, in a dict
 
-        assert model_name == 'home' or model_name == 'away', 'ERROR - model predict: WRONG model name. Give "home" or "away"'
+        Args:
+            testloader: dataloader containing the test data
+            field:      type of match [HOME / AWAY]
 
-        preds = []
+        Returns:
+            preds: dict{ KEY:   model number
+                         VALUE: list of predictions}
 
-        for model in self.models:
-            if (model_name == 'home'):
+        """
+        model_name = str(field).lower()
+
+        assert field == HOME or field == AWAY, 'ERROR - model predict: WRONG model name. Give "home" or "away"'
+
+        preds = {}
+
+        for i, model in enumerate(self.models):
+            if (model_name == HOME):
                 # logger.info('> Calling Home Network')
                 field_net = model.model.home_network
-            elif (model_name == 'away'):
+            elif (model_name == AWAY):
                 # logger.info('> Calling Away Network')
                 field_net = model.model.away_network
             else:
                 raise ValueError('Model - predict: Wrong model name')
 
-
-            # logger.info('> Prediction')
-
-            model_pred = []
+            model_preds = []
             with torch.no_grad():
 
                 for x in testloader:
@@ -109,11 +119,11 @@ class K_fold_model():
 
                     out = out.squeeze()
 
-                    model_pred.append(out.item())
+                    model_preds.append(out.item())
 
-            preds.append(model_pred)
+            preds[i] = model_preds
 
-        return np.mean(preds, axis=0)
+        return preds
 
 
     def get_losses(self):

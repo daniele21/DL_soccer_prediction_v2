@@ -5,8 +5,10 @@ from torch.utils.data import Dataset, DataLoader
 import pandas as pd
 
 from core.str2bool import str2bool
-from scripts.constants.configs import BASE_DATASET, WINDOWED_DATASET, DEFAULT_TEST_SIZE, DEFAULT_EVAL_SIZE, FINAL_PHASE
+from scripts.constants.configs import BASE_DATASET, WINDOWED_DATASET, DEFAULT_TEST_SIZE, DEFAULT_EVAL_SIZE, FINAL_PHASE, \
+    PRODUCTION_LABEL, PROD_PHASE_LABEL
 from scripts.data.dataset_utils import windowed_dataset_split
+from scripts.exceptions.param_exc import ParameterError
 
 
 def data_to_tensor(data):
@@ -175,8 +177,7 @@ def create_training_dataloader(input_data, params):
         return dataset, in_feature
 
     else:
-        dataset = base_dataset(input_data, params)
-        batch_size = int(params['batch_size'])
+        raise ParameterError(f'Invalid or Missing Dataset params:\n {params["dataset"]}')
 
 
     dataloader = {x:DataLoader(dataset     = dataset[x],
@@ -197,24 +198,21 @@ def create_training_dataloader(input_data, params):
     return dataloader, in_features
 
 def windowed_dataset(data, params):
-    if('active' in list(params.keys()) and 'phase' in list(params.keys())):
-        production = str2bool(params['active']) and params['phase'] == FINAL_PHASE
-    else:
-        production = False
+    production = params[PRODUCTION_LABEL]
 
-    # train_params = {'train': True,
-    #                 'batch_size': params['batch_size']}
-    # eval_params = {**train_params}
-    # eval_params['train'] = False
+    train_params = {'train': True,
+                    'batch_size': params['batch_size']}
+    eval_params = {**train_params}
+    eval_params['train'] = False
 
-    test_size = params['test_size'] if 'test_size' in list(params.keys()) else DEFAULT_TEST_SIZE
+    test_size = params['test_size']
     data_slice = slice(-test_size) if test_size >0 else slice(None)
 
     data_size = len(data['home'])
 
     splitter = windowed_dataset_split(data_size, params)
-    train_indexes, test_indexes = splitter.split(data_size, params.get('plot'))
-
+    train_indexes, eval_indexes = splitter.split(data_size, params.get('plot'))
+    n_folds = splitter.get_splits()
 
     train_set_folds = {'home':[],
                        'away':[]}
@@ -228,27 +226,12 @@ def windowed_dataset(data, params):
         for i in range(len(train_indexes)):
             train_index, eval_index = train_indexes[i], eval_indexes[i]
 
-            if (production and i_fold == n_folds):
-                train_slice = slice(train_index[0], None)
-                eval_slice = slice(0)
-            else:
-                train_slice = slice(train_index[0], train_index[-1])
+            train_slice = slice(train_index[0], train_index[-1])
+
+            if len(eval_index) > 0:
                 eval_slice = slice(eval_index[0], eval_index[-1])
-
-            train_set = data[field].iloc[train_slice]
-            eval_set = data[field].iloc[eval_slice]
-
-            train_set_folds[field].append(train_set)
-            eval_set_folds[field].append(eval_set)
-
-            i_fold += 1
-
-        for train_index, eval_index in splitter.split(data[field]):
-            if(production and i_fold==n_folds):
-                train_slice, eval_slice = slice(train_index[0], None), slice(0)
             else:
-                train_slice, eval_slice = slice(train_index[0], train_index[-1]), \
-                                          slice(eval_index[0], eval_index[-1])
+                eval_slice = slice(0)
 
             train_set = data[field].iloc[train_slice]
             eval_set = data[field].iloc[eval_slice]

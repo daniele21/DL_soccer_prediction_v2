@@ -23,7 +23,7 @@ class Base_Model():
         self.model = network.to(self.device)
         self.trainloader = dataloader['train']
         self.evalloader = dataloader['eval']
-        self.testloader = dataloader['test'] if 'test' in list(dataloader.keys()) else None
+        # self.testloader = dataloader['test'] if 'test' in list(dataloader.keys()) else None
         
         self.optimizer = get_optimizer_from_name(params['optimizer'])(self.model.parameters(),
                                                                       lr=params['lr'])
@@ -54,11 +54,8 @@ class Base_Model():
         self.es_patience = params['es_patience'] if 'es_patience' in list(params.keys()) else 0.005
 
         # PRODUCTION PARAMS
-        self.production = False
-
-        if(len(self.evalloader) == 0):
-            self.production = str2bool(params['active']) and params['phase'] == 'final'
-            self.stop_loss = float(params['stop_loss'])
+        self.production = str2bool(params['production'])
+        self.stop_loss = float(params['stop_loss'])
         
     def _train_one_epoch(self):
         self.model.train()

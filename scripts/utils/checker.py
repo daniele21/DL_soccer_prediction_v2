@@ -4,11 +4,7 @@ import scripts.data.constants as K
 import scripts.constants.league as LEAGUE
 from core.file_manager.os_utils import exists
 from core.str2bool import str2bool
-from scripts.constants.configs import DEFAULT_COMBO_LIST, DEFAULT_FILTER_BET, DEFAULT_MONEY_BET, DEFAULT_THR_LIST, \
-    DEFAULT_FILTER_BET_LIST, DEFAULT_TEST_SIZE, LEAGUE_NAME_LABEL, \
-    N_PREV_MATCH_LABEL, TRAIN_LABEL, TEST_SIZE_LABEL, LEAGUE_DIR_LABEL, UPDATE_LABEL, DEFAULT_UPDATE, THR_LABEL, \
-    FIELD_LABEL, SAVE_DIR_LABEL, N_MATCHES_LABEL, COMBO_LABEL, COMBO_LIST_LABEL, FILTER_BET_LABEL, MONEY_BET_LABEL, \
-    THR_LIST_LABEL, FILTER_BET_LIST_LABEL, DEFAULT_THR, DEFAULT_SAVE_DIR, DEFAULT_VERBOSE, VERBOSE_LABEL
+from scripts.constants.configs import *
 from scripts.constants.paths import LEAGUE_PARAMS_FILENAME, DATA_PARAMS_FILENAME, MODEL_PARAMS_FILENAME, \
     FEAT_ENG_FILENAME
 from scripts.exceptions.param_exc import ParameterError
@@ -136,10 +132,41 @@ def check_data_params(data_params):
     params[TEST_SIZE_LABEL] = int(data_params[TEST_SIZE_LABEL]) if TEST_SIZE_LABEL in params_list else DEFAULT_TEST_SIZE
     params[LEAGUE_DIR_LABEL] = data_params[LEAGUE_DIR_LABEL] if LEAGUE_DIR_LABEL in params_list else -1
     params[UPDATE_LABEL] = data_params[UPDATE_LABEL] if UPDATE_LABEL in params_list else DEFAULT_UPDATE
+    params[PLOT_LABEL] = data_params[PLOT_LABEL] if PLOT_LABEL in params_list else DEFAULT_PLOT
 
     if -1 in params.values():
         raise ParameterError(f'Invalid or Missing Data Params:\n {data_params}')
 
+    return params
+
+def check_dataset_params(data_params):
+    params_list = list(data_params.keys())
+
+    params = {}
+    params[TRAIN_LABEL] = str2bool(data_params[TRAIN_LABEL]) if TRAIN_LABEL in params_list else -1
+    params[NORMALIZE_LABEL] = data_params[NORMALIZE_LABEL] if NORMALIZE_LABEL in params_list else DEFAULT_NORMALIZE
+    params[SAVE_DIR_LABEL] = data_params[SAVE_DIR_LABEL] if SAVE_DIR_LABEL in params_list else DEFAULT_SAVE_DIR
+    params[DATASET_LABEL] = int(data_params[DATASET_LABEL]) if DATASET_LABEL in params_list else DEFAULT_DATASET
+    params[BATCH_SIZE_LABEL] = int(data_params[BATCH_SIZE_LABEL]) if BATCH_SIZE_LABEL in params_list else DEFAULT_BATCH_SIZE
+    params[TEST_SIZE_LABEL] = int(data_params[TEST_SIZE_LABEL]) if TEST_SIZE_LABEL in params_list else DEFAULT_TEST_SIZE
+    params[WINDOW_LABEL] = int(data_params[WINDOW_LABEL]) if WINDOW_LABEL in params_list else DEFAULT_WINDOW
+
+    if(params[DATASET_LABEL] == WINDOWED_DATASET):
+        params[EVAL_SIZE_LABEL] = int(data_params[EVAL_SIZE_LABEL]) if EVAL_SIZE_LABEL in params_list else DEFAULT_EVAL_SIZE
+        params[MAX_TRAIN_SIZE_LABEL] = int(data_params[MAX_TRAIN_SIZE_LABEL]) if MAX_TRAIN_SIZE_LABEL in params_list else DEFAULT_MAX_TRAIN_SIZE
+        params[N_SPLITS_LABEL] = int(data_params[N_SPLITS_LABEL]) if N_SPLITS_LABEL in params_list else DEFAULT_N_SPLITS
+        params[GAP_LABEL] = int(data_params[GAP_LABEL]) if GAP_LABEL in params_list else DEFAULT_GAP
+    else:
+        params[SPLIT_SIZE_LABEL] = int(data_params[SPLIT_SIZE_LABEL]) if SPLIT_SIZE_LABEL in params_list else DEFAULT_SPLIT_SIZE
+
+
+    params[PRODUCTION_LABEL] = data_params[PRODUCTION_LABEL] if PRODUCTION_LABEL in params_list else DEFAULT_PRODUCTION
+    params[PROD_PHASE_LABEL] = data_params[PROD_PHASE_LABEL] if PROD_PHASE_LABEL in params_list else DEFAULT_PROD_PHASE
+
+    params[PLOT_LABEL] = data_params[PLOT_LABEL] if PLOT_LABEL in params_list else DEFAULT_PLOT
+
+    if -1 in params.values():
+        raise ParameterError(f'Invalid or Missing Data Params:\n {data_params}')
 
     return params
 

@@ -31,7 +31,7 @@ def generate_dataset(input_data, params):
     normalize = str2bool(params['normalize'])
     home_data = input_data['home']
     away_data = input_data['away']
-    save_dir = params['save_dir'] if 'save_dir' in list(params.keys()) else None
+    save_dir = params['save_dir']
 
     if(int(params['version']) == 1):
         home_feat_eng = Feature_engineering_v1(home_data,
