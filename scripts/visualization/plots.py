@@ -2,6 +2,7 @@
 import matplotlib
 import matplotlib.pyplot as plt
 
+# matplotlib.use('TkAgg')
 matplotlib.use('agg')
 
 from core.file_manager.os_utils import ensure_folder
@@ -128,7 +129,8 @@ def plot_simulation(simulation_result, params, plot=True):
     title = f'{field.upper()}_thr={thr}_filter={filter_bet}'
 
     data = simulation_result
-    cum_gain_list = data[data['cum_gain']!=0]['cum_gain'].to_list()
+    # cum_gain_list = data[data['cum_gain']!=0]['cum_gain'].to_list()
+    cum_gain_list = data['cum_gain'].to_list()
 
     labels = simulation_result['match'].to_list()
     idxs = range(len(labels))
