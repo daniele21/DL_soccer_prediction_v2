@@ -1,9 +1,15 @@
 # from sklearn.model_selection import TimeSeriesSplit
 import numpy as np
-from scripts.constants.configs import DEFAULT_EVAL_SIZE
+import pandas as pd
 
+import matplotlib
 import matplotlib.pyplot as plt
 
+from scripts.constants.configs import DEFAULT_EVAL_SIZE
+from scripts.constants.league import LEAGUE_NAMES
+from scripts.constants.paths import DATA_DIR
+
+matplotlib.use('TkAgg')
 
 def windowed_dataset_split(data_size, params):
     """
@@ -59,7 +65,7 @@ class TimeSeriesSplitter():
         self.max_train_size = max_train_size if max_train_size is not None else window
         self.test_size = test_size if test_size is not None else window
         self.n_splits = n_splits
-        self.gap = gap if gap is not None else test_size
+        self.gap = gap if gap is not None else window
         self.production = production
 
     def split(self, data_size, plot=False):
@@ -136,7 +142,21 @@ class TimeSeriesSplitter():
 
         return self.n_splits
 
+def get_split_size(league_name, npm=10, eval_size=None, test_size=100):
 
+    if league_name in LEAGUE_NAMES:
+        league_path = f'{DATA_DIR}{league_name}/{league_name}_npm={npm}.csv'
+
+        league_csv = pd.read_csv(league_path)
+        matches = len(league_csv) - test_size - 10
+
+        split_size = 1 - ((eval_size + 1) / matches)
+
+    else:
+        split_size = -1
+
+
+    return split_size
 
 
 
