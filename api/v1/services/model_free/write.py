@@ -1,5 +1,5 @@
 from scripts.data.data_process import extract_data_league
-from scripts.utils.checker import check_league, check_npm
+from scripts.utils.checker import check_league, check_npm, check_data_params
 from scripts.constants.paths import DATA_DIR
 
 from flask import make_response, jsonify, request, render_template
@@ -20,7 +20,6 @@ def create_league_data():
 
     """
 
-    # requested params [league_name, npm]
     params = request.json
     league_name = params['league_name']
     npm = params['n_prev_match']
@@ -38,6 +37,7 @@ def create_league_data():
         except RuntimeError:
             pass
 
+        params = check_data_params(params)
         p = Process(target=extract_data_league, args=(params,))
         p.start()
         p.join()

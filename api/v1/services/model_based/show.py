@@ -3,7 +3,7 @@ from flask import make_response, request, render_template
 from core.file_manager.saving import save_json, save_str_file
 from scripts.constants.configs import HOME, AWAY
 from scripts.constants.paths import STATIC_DIR
-from scripts.utils.checker import check_league, check_predict_paths
+from scripts.utils.checker import check_league, check_predict_paths, check_evaluation_params, check_simulation_params
 from api.v1.utils import show_plot, load_models, load_model_and_config
 from scripts.data.postprocessing import postprocessing_test_data
 from scripts.models.evaluation import evaluate_results, thr_analysis
@@ -75,39 +75,6 @@ def show_evaluation_hist_from_path(league_name):
     return response
 
 
-# @app.route('/api/v1/show/<league_name>/simulation', methods=['POST'])
-# def show_simulation(league_name):
-#
-#     # requested params : [thr, thr_list, field, filter_bet, money_bet, n_matches, combo]
-#
-#     args = request.json
-#     config = configs[league_name]['league']
-#
-#     params = {**args, **config}
-#     params['save_dir'] = STATIC_DIR
-#
-#     outcome, msg = check_league(league_name)
-#     if (outcome == False):
-#         response = make_response(msg, 404)
-#
-#     else:
-#         model = models[league_name]
-#         feat_eng = configs[league_name]['feat_eng']
-#
-#         testset, pred, true = real_case_inference(model, params, feat_eng)
-#
-#         pred_df, _ = evaluate_results(true, pred, params, plot=False)
-#         _, _, _ = thr_analysis(true, pred, params)
-#         data_result = postprocessing_test_data(testset, pred_df)
-#         summary, sim_result, fig = simulation(data_result, params, plot=False)
-#
-#         show_summary(summary)
-#
-#         response = show_plot(fig)
-#
-#     return response
-
-
 @app.route('/api/v1/show/<league_name>/simulation', methods=['POST'])
 def show_simulation(league_name):
 
@@ -129,26 +96,29 @@ def show_simulation(league_name):
 
     testset, pred, true = real_case_inference(model, params, feat_eng)
 
-    pred_df, _, _ = evaluate_results(true, pred, params, plot=False)
+    eval_params = check_evaluation_params(params)
+    pred_df, _, _ = evaluate_results(true, pred, eval_params, plot=False)
     _, _, thr_dict = thr_analysis(true, pred, params)
     thr_outcome = thr_dict[str(params['thr'])]
     data_result = postprocessing_test_data(testset, pred_df)
-    summary, sim_result, fig = simulation(data_result, params, thr_outcome, plot=False)
+
+    simulation_params = check_simulation_params(params)
+    sim_result, fig = simulation(data_result, simulation_params, plot=False)
 
     fig.savefig(f'{STATIC_DIR}simulation.png')
-    summary_str = show_summary(summary)
-    save_str_file(summary_str, f'{STATIC_DIR}summary', mode='w')
-    save_str_file(summary_str, f'{data_params["save_dir"]}summary', mode='w')
+    # summary_str = show_summary(summary)
+    # save_str_file(summary_str, f'{STATIC_DIR}summary', mode='w')
+    # save_str_file(summary_str, f'{data_params["save_dir"]}summary', mode='w')
 
     response = show_plot(fig)
 
-    # params['field'] = HOME
-    # result_home_df = strategy_stats(testset, pred, true, params)
+    params['field'] = HOME
+    testset, pred, true = real_case_inference(model, params, feat_eng)
+    result_home_df = strategy_stats(testset, pred, true, simulation_params)
 
-
-    # params['field'] = AWAY
-    # testset, pred, true = real_case_inference(model, params, feat_eng)
-    # result_away_df = strategy_stats(testset, pred, true, params)
+    params['field'] = AWAY
+    testset, pred, true = real_case_inference(model, params, feat_eng)
+    result_away_df = strategy_stats(testset, pred, true, simulation_params)
 
     return response
 

@@ -1,4 +1,3 @@
-from json import JSONDecodeError
 
 from api.v1.utils import load_models, load_model_and_config
 from scripts.constants.configs import HOME, AWAY
@@ -20,7 +19,7 @@ from . import configs, models
 
 
 
-@app.route('/api/v1/predict/', methods=['POST'])
+@app.route('/api/v1/process/predict/', methods=['POST'])
 def predict():
     """
 
@@ -57,6 +56,8 @@ def predict():
 
     params = {**params, **league_params, **data_params}
 
+    thr_fields = params['thr'] if 'thr' in list(params.keys()) else None
+
     matches = {'home_teams': params['home_teams'],
                'away_teams': params['away_teams'],
                '1X_odds': params['1X_odds'],
@@ -69,9 +70,9 @@ def predict():
 
     predictions = {}
     for field in [HOME, AWAY]:
-        predict_config = PREDICT_CONFIG[league_name][LOW_RISK][field]
-        thr = predict_config['thr']
-        filter_bet = predict_config['filter_bet']
+        # predict_config = PREDICT_CONFIG[league_name][LOW_RISK][field]
+        thr = thr_fields[field] if thr_fields is not None else None
+        # filter_bet = predict_config['filter_bet']
 
         pred, _ = model_inference(matches_df[field],
                                   feat_eng,
@@ -85,82 +86,82 @@ def predict():
     response = make_response(jsonify(outcome_dict), 200)
 
     return response
-
-@app.route('/api/v1/predict/path', methods=['POST'])
-def predict_from_path():
-    """
-    Requested Params: dict{'model_dir',
-                           'model_name',
-                           'thr',
-                           'round',
-                           'home',
-                           'away',
-                           '1X_odds',
-                           'X2_odds'}
-
-    Returns:
-        prediction: dict{'match',
-                         '1X',
-                         'pred_1X',
-                         'X2',
-                         'pred_X2'}
-
-    """
-    path_dict = request.json
-
-    model_dir = path_dict['model_dir']
-    model_name = path_dict['model_name']
-
-    response = check_predict_paths(model_dir, model_name)
-
-    if not response['check']:
-        response = make_response(response['msg'], 400)
-
-    else:
-        paths = response['paths']
-
-        try:
-            config, model = load_configs_from_paths(paths)
-
-        except FileNotFoundError as error:
-            msg = f'File not found: {error}'
-            response = {'check':False,
-                        'msg':msg}
-
-            return response
-
-        except JSONDecodeError as error:
-            msg = f'Json decoder error: {error}'
-            response = {'check': False,
-                        'msg': msg}
-
-            return response
-
-        # PREDICTION PROCESS
-        matches = request.json
-        thr = matches['thr'] if 'thr' in list(matches.keys()) else None
-
-        league_params = config['league']
-        feat_eng = config['feat_eng']
-
-        test_data = generate_test_data(league_params)
-
-        matches_df = fill_inference_matches(test_data, matches)
-
-        predictions = {}
-        for field in ['home', 'away']:
-            pred, _ = model_inference(matches_df[field],
-                                      feat_eng,
-                                      model,
-                                      model_name=field,
-                                      train=False)
-            predictions[field] = pred
-
-        outcome_dict = generate_output(matches_df, predictions, thr)
-
-        response = make_response(jsonify(outcome_dict), 200)
-
-        return response
+#
+# @app.route('/api/v1/predict/path', methods=['POST'])
+# def predict_from_path():
+#     """
+#     Requested Params: dict{'model_dir',
+#                            'model_name',
+#                            'thr',
+#                            'round',
+#                            'home',
+#                            'away',
+#                            '1X_odds',
+#                            'X2_odds'}
+#
+#     Returns:
+#         prediction: dict{'match',
+#                          '1X',
+#                          'pred_1X',
+#                          'X2',
+#                          'pred_X2'}
+#
+#     """
+#     path_dict = request.json
+#
+#     model_dir = path_dict['model_dir']
+#     model_name = path_dict['model_name']
+#
+#     response = check_predict_paths(model_dir, model_name)
+#
+#     if not response['check']:
+#         response = make_response(response['msg'], 400)
+#
+#     else:
+#         paths = response['paths']
+#
+#         try:
+#             config, model = load_configs_from_paths(paths)
+#
+#         except FileNotFoundError as error:
+#             msg = f'File not found: {error}'
+#             response = {'check':False,
+#                         'msg':msg}
+#
+#             return response
+#
+#         except JSONDecodeError as error:
+#             msg = f'Json decoder error: {error}'
+#             response = {'check': False,
+#                         'msg': msg}
+#
+#             return response
+#
+#         # PREDICTION PROCESS
+#         matches = request.json
+#         thr = matches['thr'] if 'thr' in list(matches.keys()) else None
+#
+#         league_params = config['league']
+#         feat_eng = config['feat_eng']
+#
+#         test_data = generate_test_data(league_params)
+#
+#         matches_df = fill_inference_matches(test_data, matches)
+#
+#         predictions = {}
+#         for field in ['home', 'away']:
+#             pred, _ = model_inference(matches_df[field],
+#                                       feat_eng,
+#                                       model,
+#                                       model_name=field,
+#                                       train=False)
+#             predictions[field] = pred
+#
+#         outcome_dict = generate_output(matches_df, predictions, thr)
+#
+#         response = make_response(jsonify(outcome_dict), 200)
+#
+#         return response
 
 @app.route('/api/v1/process/thr_analysis', methods=['POST'])
 def process_thr_analysis():
