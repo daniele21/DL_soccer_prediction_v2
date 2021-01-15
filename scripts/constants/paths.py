@@ -1,9 +1,23 @@
 from scripts.constants.league import SERIE_A, PREMIER, JUPILIER
 
+"""
+production_paths: dict {'serie_a': {'model_params': path,
+                                    'league_params': path,
+                                    'data_params': path,
+                                    'model': model_path,
+                                    'feat_eng': feat_eng},
+                                    
+                        'premier_league': {...}
+                        
+                        }
+
+"""
+
 STATIC_DIR = 'api/v1/static/'
 DATA_DIR = 'resources/leagues_data/'
 MODEL_DIR = 'resources/models/'
 PRODUCTION_DIR = 'resources/production/'
+
 SERIE_A_NETWORK = 'network_v1/'
 SERIE_A_MODEL_NAME = 'SERIE_A_2020-12-27_17:55:49.780729_windowed_fe=2_net=2'
 
