@@ -11,12 +11,12 @@ def checkpoint(model, early_stopping=True):
         curr_train_loss = losses['train'][-1]
         train_loss_diff = curr_train_loss - last_train_loss
 
-        try:
-            last_five_eval_loss = losses['eval'][-6]
-            last_three_eval_loss = losses['eval'][-4]
-        except:
-            last_five_eval_loss = 10000
-            last_three_eval_loss = 10000
+        # try:
+        #     last_five_eval_loss = losses['eval'][-6]
+        #     last_three_eval_loss = losses['eval'][-4]
+        # except:
+        #     last_five_eval_loss = 10000
+        #     last_three_eval_loss = 10000
 
         last_eval_loss = losses['eval'][-2]
         curr_eval_loss = losses['eval'][-1]
@@ -27,15 +27,15 @@ def checkpoint(model, early_stopping=True):
 
             filepath = save_soccer_model(model)
             return filepath
-        else:
-            if (train_loss_diff < last_train_loss * patience_rate and
-                    eval_loss_diff < last_eval_loss * patience_rate and
-                    curr_eval_loss - last_three_eval_loss < last_three_eval_loss * patience_rate and
-                    curr_eval_loss - last_five_eval_loss < last_five_eval_loss * patience_rate
-                ):
+        # else:
+            # if (train_loss_diff < last_train_loss * patience_rate and
+            #         eval_loss_diff < last_eval_loss * patience_rate and
+            #         curr_eval_loss - last_three_eval_loss < last_three_eval_loss * patience_rate and
+            #         curr_eval_loss - last_five_eval_loss < last_five_eval_loss * patience_rate
+            #     ):
 
-                filepath = save_soccer_model(model)
-                return filepath
+                # filepath = save_soccer_model(model)
+                # return filepath
     else:
         filepath = save_soccer_model(model)
         return filepath

@@ -8,6 +8,7 @@ import sys
 
 from core.file_manager.saving import save_json
 from core.str2bool import str2bool
+from scripts.constants.configs import FIRST_PATIENCE
 from scripts.models.model_utils import get_optimizer_from_name, get_loss_from_name, get_device_from_name
 from scripts.visualization.plots import plot_loss
 from scripts.utils.utils import spent_time, logger
@@ -54,8 +55,10 @@ class Base_Model():
         self.es_patience = params['es_patience'] if 'es_patience' in list(params.keys()) else 0.005
 
         # PRODUCTION PARAMS
-        self.production = str2bool(params['production'])
-        self.stop_loss = float(params['stop_loss'])
+        self.production = False
+        if(len(self.evalloader.dataset.x['home']) == 0 and len(self.evalloader.dataset.x['away']) == 0):
+            self.production = str2bool(params['production'])
+            self.stop_loss = params.get('stop_loss')
         
     def _train_one_epoch(self):
         self.model.train()
@@ -231,8 +234,8 @@ class Base_Model():
     def early_stopping(self, patience):
 
         if (patience is not None and
-                self.curr_patience >= patience and
-                    self.epoch > 1):
+            self.curr_patience >= patience and
+            self.epoch > FIRST_PATIENCE):
             if(self.verbose):
                 logger.info(' > Early Stopping: Patience Completed')
             stop = True

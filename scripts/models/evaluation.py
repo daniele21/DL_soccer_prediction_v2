@@ -135,8 +135,6 @@ def _select_match_to_bet(match_data, params, combo=None):
                     'money_bet':[],
                     'list':[],
                     'cum_list':[]}
-    # combo_list = []
-    # cum_combo_list = []
 
     data = match_data.reset_index(drop=True)
     data = data[(data['to_bet'] == True) & (data['bet'] > filter_bet) ]
