@@ -19,10 +19,21 @@ class Training_Soccer_Dataset(Dataset):
 
     def __init__(self, train_data, params, target_col='f-WD'):
 
-        self.x = {'home':train_data['home'].drop(target_col, axis=1),
-                  'away':train_data['away'].drop(target_col, axis=1)}
-        self.y = {'home':train_data['home'][target_col],
-                  'away':train_data['away'][target_col]}
+        if(len(train_data['home']) == 0 and len(train_data['away']) == 0):
+            self.x = {'home':pd.DataFrame(),
+                      'away':pd.DataFrame()}
+            self.y = {'home': pd.DataFrame(),
+                      'away': pd.DataFrame()}
+        else:
+
+            max_length = min(len(train_data['home']), len(train_data['away']))
+            data = {'home': train_data['home'].iloc[:max_length],
+                    'away': train_data['away'].iloc[:max_length]}
+
+            self.x = {'home': data['home'].drop(target_col, axis=1),
+                      'away': data['away'].drop(target_col, axis=1)}
+            self.y = {'home': data['home'][target_col],
+                      'away': data['away'][target_col]}
 
         self.window_size = params['window_size']
         self.train = params['train']
@@ -34,9 +45,14 @@ class Training_Soccer_Dataset(Dataset):
 
     def __len__(self):
         if (self.train):
-            return len(self.x['home']) - self.window_size
+            length = len(self.x['home']) - self.window_size
         else:
-            return len(self.x['home'])
+            length = len(self.x['home'])
+
+        if length < 0:
+            return 0
+        else:
+            return length
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
@@ -198,8 +214,6 @@ def create_training_dataloader(input_data, params):
     return dataloader, in_features
 
 def windowed_dataset(data, params):
-    production = params[PRODUCTION_LABEL]
-
     train_params = {'train': True,
                     'batch_size': params['batch_size']}
     eval_params = {**train_params}
@@ -208,7 +222,7 @@ def windowed_dataset(data, params):
     test_size = params['test_size']
     data_slice = slice(-test_size) if test_size >0 else slice(None)
 
-    data_size = len(data['home'])
+    data_size = len(data['home']) - test_size
 
     splitter = windowed_dataset_split(data_size, params)
     train_indexes, eval_indexes = splitter.split(data_size, params.get('plot'))
