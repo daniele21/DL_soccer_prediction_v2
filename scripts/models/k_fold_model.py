@@ -123,7 +123,7 @@ class K_fold_model():
 
             preds[i] = model_preds
 
-        return preds
+        return preds[i]
 
 
     def get_losses(self):

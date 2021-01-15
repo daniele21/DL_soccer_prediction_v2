@@ -1,5 +1,6 @@
 import os
 
+from core.str2bool import str2bool
 from scripts.constants.configs import BASE_DATASET, WINDOWED_DATASET
 from scripts.constants.paths import PRODUCTION_DIR
 from scripts.models.base import Base_Model
@@ -23,6 +24,7 @@ def model_directory(league_params, data_params, model_params, production=False):
     dataset_type = data_params['dataset']
     feat_eng_v = data_params['version']
     network_v = model_params['version']
+    production = str2bool(model_params.get('production'))
 
     name = f'{dataset_type}_fe={feat_eng_v}_net={network_v}'
 
@@ -30,7 +32,11 @@ def model_directory(league_params, data_params, model_params, production=False):
 
     ckp_model_path = PRODUCTION_DIR if production else os.environ['CKP_MODEL_PATH']
 
-    model_name = f'{league_name.upper()}_{timestamp}_{name}'
+    if(production is not None and production):
+        model_name = f'{league_name.upper()}_{timestamp}_{name}_PRODUCTION'
+    else:
+        model_name = f'{league_name.upper()}_{timestamp}_{name}'
+
     model_dir = f'{ckp_model_path}{league_name}/{model_name}/'
 
     return model_name, model_dir

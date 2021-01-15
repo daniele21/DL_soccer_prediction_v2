@@ -25,7 +25,8 @@ def summarize_sim_result(sim_result, params):
     save_dir = params['save_dir']
 
     try:
-        cum_gain_series = sim_result[sim_result['cum_gain'] != 0]['cum_gain']
+        # cum_gain_series = sim_result[sim_result['cum_gain'] != 0]['cum_gain']
+        cum_gain_series = sim_result['cum_gain']
     except:
         return None
 
@@ -82,7 +83,7 @@ def simulation(match_data, params, plot=False):
 
     n_matches = params['n_matches']
     combo_list = params['combo_list']
-    field = params['field']
+
     save_dir = params.get('save_dir')
 
     data = match_data.iloc[:n_matches]
@@ -123,8 +124,8 @@ def strategy_stats(testset, pred, true,
     result_df = pd.DataFrame()
     ckp_df = pd.DataFrame()
 
-    for thr in tqdm(thr_list):
-        for filter_bet in filter_bet_list:
+    for thr in tqdm(thr_list, desc='Thr \t'):
+        for filter_bet in tqdm(filter_bet_list, desc='Filter Bet \t'):
             _, _, thr_outcome = thr_analysis(true, pred, simulation_params)
 
             if (thr_outcome[str(thr)]['tpr'] != 'nan'):
