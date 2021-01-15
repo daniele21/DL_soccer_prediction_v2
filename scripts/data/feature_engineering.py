@@ -4,9 +4,12 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 def __categorical_encoding(series, pad_space=0):
-    
-    encoder = {x:(i+pad_space) for i, x in enumerate(series.unique())}
-    decoder = {(i+pad_space):x for i, x in enumerate(series.unique())}
+
+    teams_list = series.unique()
+    teams_list = [x.rstrip() for x in teams_list]
+
+    encoder = {x:(i+pad_space) for i, x in enumerate(teams_list)}
+    decoder = {(i+pad_space):x for i, x in enumerate(teams_list)}
     
     return encoder, decoder
 
@@ -139,8 +142,12 @@ class Feature_engineering_v1():
         assert data.isnull().sum().sum() == 0, 'ERROR: Transform Feat.Eng V1 --> There are some NaNs'
 
         # From Categorical to Numeric
+        # data['f-opponent'] = data['f-opponent'].str.
+
         data['team'] = data['team'].apply(_encoding, args=(self.team_encoder,))
         data['opponent'] = data['opponent'].apply(_encoding, args=(self.team_encoder,))
+
+        data['f-opponent'] = data['f-opponent'].str.rstrip()
         data['f-opponent'] = data['f-opponent'].apply(_encoding, args=(self.team_encoder,))
         data['points'] = data['points'].astype(int).apply(_encoding, args=(self.res_encoder,))
 
@@ -246,6 +253,10 @@ class Feature_engineering_v2():
         assert data.isnull().sum().sum() == 0, 'ERROR: Transform Feat.Eng V1 --> There are some NaNs'
 
         # From Categorical to Numeric
+        data['team'] = data['team'].str.rstrip()
+        data['opponent'] = data['opponent'].str.rstrip()
+        data['f-opponent'] = data['f-opponent'].str.rstrip()
+
         data['team'] = data['team'].apply(_encoding, args=(self.team_encoder,))
         data['opponent'] = data['opponent'].apply(_encoding, args=(self.team_encoder,))
         data['f-opponent'] = data['f-opponent'].apply(_encoding, args=(self.team_encoder,))
