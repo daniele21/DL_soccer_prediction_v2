@@ -3,11 +3,12 @@ import pandas as pd
 from core.str2bool import str2bool
 from core.time_decorator import timing
 from core.file_manager.os_utils import exists, ensure_folder
+from scripts.constants.paths import DATA_DIR
 
 from scripts.data.preprocessing import (preprocessing_season,
                                         feature_engineering_league)
 from scripts.data import constants as K
-import scripts.constants.league as L
+import scripts.constants.league as LEAGUE
 from core.logger.logging import logger
 from urllib.error import HTTPError
 
@@ -63,7 +64,7 @@ def extract_training_data(league_name, n_prev_match):
 
     league_df = pd.DataFrame()
 
-    for season_i, path in enumerate(K.get_league_csv_paths(league_name)):
+    for season_i, path in enumerate(LEAGUE.LEAGUE_PATHS[league_name]):
         season_df = extract_season_data(path, season_i, league_name)
         league_df = league_df.append(season_df, sort=False)
         league_df = league_df.reset_index(drop=True)
@@ -119,8 +120,15 @@ def extract_season_data(path, season_i, league_name):
 
     return season_df
 
+def teams_extraction(league_name):
+    npm=10
+    if(league_name in LEAGUE.LEAGUE_NAMES):
+        league_path = f'{DATA_DIR}{league_name}/{league_name}_npm={npm}.csv'
+        league_csv = pd.read_csv(league_path)
 
+        teams = league_csv[league_csv['season'] == league_csv['season'].unique()[-1]]['HomeTeam'].unique()
 
+        return list(teams)
 
 
 def extract_test_data(league_name, n_prev_match, test_size):
