@@ -106,7 +106,8 @@ class LSTM_FCN_Network(nn.Module):
         h = self.conv_layers(h)
 
         out = self.fc_act(self.fc(h))
-        out = out.squeeze()
+        # out = out.squeeze()
+        out = out.reshape(out.shape[0], out.shape[2])
 
         return out
 
