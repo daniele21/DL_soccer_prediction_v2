@@ -1,6 +1,9 @@
+from core.file_manager.loading import load_json
 from core.file_manager.saving import save_json, save_str_file, save_model
 from core.logger.logging import logger
 from core.file_manager.os_utils import ensure_folder
+from scripts.constants.paths import PRODUCTION_DIR
+from scripts.utils.loading import load_production_paths
 
 
 def _json_item_to_str(json_params):
@@ -133,3 +136,28 @@ def save_simulation(simulation_df, params, folder_dir):
     simulation_df.to_csv(filepath, sep=';', decimal=',')
 
     return
+
+
+def save_model_paths_production(league_name, model_dir, model_name):
+    production_paths = load_production_paths()
+
+    league_params_path = f'{model_dir}1.league_params.json'
+    data_params_path = f'{model_dir}2.data_params.json'
+    model_params_path = f'{model_dir}3.model_params.json'
+    model_path = f'{model_dir}{model_name}.pth'
+    feat_eng_path = f'{model_dir}feat_eng'
+
+
+    production_paths[league_name] = {'model_params': model_params_path,
+                                     'league_params': league_params_path,
+                                     'data_params': data_params_path,
+                                     'model_path': model_path,
+                                     'feat_eng': feat_eng_path}
+
+    save_path = f'{PRODUCTION_DIR}production_paths.json'
+    save_json(production_paths, save_path)
+
+    logger.info('---------------------------------------------------------')
+    logger.info(f'\n\nUpdating production paths: {league_name.upper()}\n')
+    logger.info(f'New Path : {model_dir}')
+    logger.info('---------------------------------------------------------')

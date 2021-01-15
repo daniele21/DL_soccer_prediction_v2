@@ -3,8 +3,10 @@ from _ast import Dict
 import torch
 from core.file_manager.loading import load_json, load_object
 from core.logger.logging import logger
+from scripts.constants.league import LEAGUE_NAMES
+from scripts.constants.paths import MODEL_DIR, PRODUCTION_DIR
 from scripts.data.constants import load_model_paths
-import scripts.constants.paths as K
+# import scripts.constants.paths as K
 
 def load_model(ckp_path):
     if(torch.cuda.is_available()):
@@ -38,31 +40,34 @@ def _load_model_config(paths):
     return model, config
 
 def load_configs(league_name):
+    production_paths = load_production_paths()
+
     try:
-        model_path = K.MODEL_PATH[league_name]
-        data_config_path = K.DATA_PARAMS[league_name]
-        league_config_path = K.LEAGUE_PARAMS[league_name]
-        model_config_path = K.MODEL_PARAMS[league_name]
-        feat_eng_path = K.FEAT_ENG[league_name]
+        model_path = production_paths[league_name]['model_path']
+        data_config_path = production_paths[league_name]['data_params']
+        league_config_path = production_paths[league_name]['league_params']
+        model_config_path = production_paths[league_name]['model_params']
+        feat_eng_path = production_paths[league_name]['feat_eng']
 
         model = load_model(model_path)
-        logger.info(f'\n> Loading Model: {model_path}')
+        logger.info(f'> Loading Model: {model_path}')
 
         model_config = load_json(model_config_path)
         data_config = load_json(data_config_path)
         league_config = load_json(league_config_path)
-        logger.info(f'\n> Loading Params')
+        logger.info(f'> Loading Params')
 
         feat_eng = load_object(feat_eng_path)
-        logger.info(f'\n> Loading Feature Engineering object')
+        logger.info(f'> Loading Feature Engineering object\n\n')
 
         config = {'data': data_config,
                   'league': league_config,
                   'feat_eng': feat_eng,
                   'model': model_config}
 
-    except:
+    except Exception as error:
         model, config = None, None
+        logger.info(f'Loading Model: {league_name} not found: {error}')
 
     return model, config
 
@@ -76,11 +81,11 @@ def load_model_config(league_name, model_version, model_name):
 
 def load_model_paths(league_name, model_version, model_name):
     league_name = league_name.lower()
-    league = league_name if league_name in K.LEAGUE_NAMES else None
+    league = league_name if league_name in LEAGUE_NAMES else None
     model_version = 'network_v1' if model_version == 1 else 'network_v2' if model_version == 2 else None
 
     if league is not None and model_version is not None:
-        folder_dir = f'{K.MODEL_DIR}{model_version}/{league}/{model_name}/'
+        folder_dir = f'{MODEL_DIR}{model_version}/{league}/{model_name}/'
         model_path = f'{folder_dir}{model_name}.pth'
         league_params_path = f'{folder_dir}1.league_params.json'
         data_params_path = f'{folder_dir}2.data_params.json'
@@ -98,17 +103,17 @@ def load_model_paths(league_name, model_version, model_name):
     else:
         raise ValueError('LOAD MDOEL PATHS: Wrong League Name provided')
 
-def get_league_csv_paths(league_name):
-    if (league_name == K.SERIE_A):
-        paths = K.SERIE_A_PATH
-
-    elif (league_name == K.PREMIER):
-        paths = K.PREMIER_PATH
-
-    elif (league_name == K.JUPILIER):
-        paths = K.JUPILIER_PATH
-
-    return paths
+# def get_league_csv_paths(league_name):
+#     if (league_name == K.SERIE_A):
+#         paths = K.SERIE_A_PATH
+#
+#     elif (league_name == K.PREMIER):
+#         paths = K.PREMIER_PATH
+#
+#     elif (league_name == K.JUPILIER):
+#         paths = K.JUPILIER_PATH
+#
+#     return paths
 
 def load_configs_from_paths(paths):
     """
@@ -153,3 +158,10 @@ def load_configs_from_paths(paths):
         model = load_model(model_path)
 
     return params, model
+
+def load_production_paths():
+    config_path = f'{PRODUCTION_DIR}production_paths.json'
+
+    paths_json = load_json(config_path)
+
+    return paths_json

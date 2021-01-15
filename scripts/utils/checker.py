@@ -1,6 +1,6 @@
 from json import JSONDecodeError
 
-import scripts.data.constants as K
+from scripts.constants.paths import DATA_DIR
 import scripts.constants.league as LEAGUE
 from core.file_manager.os_utils import exists
 from core.str2bool import str2bool
@@ -27,7 +27,7 @@ def check_league(league_name):
 
 def check_data_league(league_name, npm):
 
-    data_path = f'{K.DATA_DIR}{league_name}/{league_name}_npm={npm}.csv'
+    data_path = f'{DATA_DIR}{league_name}/{league_name}_npm={npm}.csv'
 
     check = exists(data_path)
     if not check:
@@ -144,12 +144,13 @@ def check_dataset_params(data_params):
 
     params = {}
     params[TRAIN_LABEL] = str2bool(data_params[TRAIN_LABEL]) if TRAIN_LABEL in params_list else -1
-    params[NORMALIZE_LABEL] = data_params[NORMALIZE_LABEL] if NORMALIZE_LABEL in params_list else DEFAULT_NORMALIZE
+    params[NORMALIZE_LABEL] = str2bool(data_params[NORMALIZE_LABEL]) if NORMALIZE_LABEL in params_list else DEFAULT_NORMALIZE
     params[SAVE_DIR_LABEL] = data_params[SAVE_DIR_LABEL] if SAVE_DIR_LABEL in params_list else DEFAULT_SAVE_DIR
-    params[DATASET_LABEL] = int(data_params[DATASET_LABEL]) if DATASET_LABEL in params_list else DEFAULT_DATASET
+    params[DATASET_LABEL] = data_params[DATASET_LABEL] if DATASET_LABEL in params_list else DEFAULT_DATASET
     params[BATCH_SIZE_LABEL] = int(data_params[BATCH_SIZE_LABEL]) if BATCH_SIZE_LABEL in params_list else DEFAULT_BATCH_SIZE
     params[TEST_SIZE_LABEL] = int(data_params[TEST_SIZE_LABEL]) if TEST_SIZE_LABEL in params_list else DEFAULT_TEST_SIZE
     params[WINDOW_LABEL] = int(data_params[WINDOW_LABEL]) if WINDOW_LABEL in params_list else DEFAULT_WINDOW
+    params[VERSION_LABEL] = int(data_params[VERSION_LABEL]) if VERSION_LABEL in params_list else DEFAULT_VERSION
 
     if(params[DATASET_LABEL] == WINDOWED_DATASET):
         params[EVAL_SIZE_LABEL] = int(data_params[EVAL_SIZE_LABEL]) if EVAL_SIZE_LABEL in params_list else DEFAULT_EVAL_SIZE
@@ -157,13 +158,13 @@ def check_dataset_params(data_params):
         params[N_SPLITS_LABEL] = int(data_params[N_SPLITS_LABEL]) if N_SPLITS_LABEL in params_list else DEFAULT_N_SPLITS
         params[GAP_LABEL] = int(data_params[GAP_LABEL]) if GAP_LABEL in params_list else DEFAULT_GAP
     else:
-        params[SPLIT_SIZE_LABEL] = int(data_params[SPLIT_SIZE_LABEL]) if SPLIT_SIZE_LABEL in params_list else DEFAULT_SPLIT_SIZE
+        params[SPLIT_SIZE_LABEL] = float(data_params[SPLIT_SIZE_LABEL]) if SPLIT_SIZE_LABEL in params_list else DEFAULT_SPLIT_SIZE
 
 
-    params[PRODUCTION_LABEL] = data_params[PRODUCTION_LABEL] if PRODUCTION_LABEL in params_list else DEFAULT_PRODUCTION
-    params[PROD_PHASE_LABEL] = data_params[PROD_PHASE_LABEL] if PROD_PHASE_LABEL in params_list else DEFAULT_PROD_PHASE
+    params[PRODUCTION_LABEL] = str2bool(data_params[PRODUCTION_LABEL]) if PRODUCTION_LABEL in params_list else DEFAULT_PRODUCTION
+    # params[PROD_PHASE_LABEL] = data_params[PROD_PHASE_LABEL] if PROD_PHASE_LABEL in params_list else DEFAULT_PROD_PHASE
 
-    params[PLOT_LABEL] = data_params[PLOT_LABEL] if PLOT_LABEL in params_list else DEFAULT_PLOT
+    params[PLOT_LABEL] = str2bool(data_params[PLOT_LABEL]) if PLOT_LABEL in params_list else DEFAULT_PLOT
 
     if -1 in params.values():
         raise ParameterError(f'Invalid or Missing Data Params:\n {data_params}')
