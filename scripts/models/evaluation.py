@@ -76,8 +76,10 @@ def thr_analysis(true, pred, params):
 
 def evaluate_results(true, pred, eval_params, plot=True):
     thr = eval_params['thr']
+    field = eval_params['field']
 
     pred_df = labeling_predictions(pred, thr, true)
+    pred_df.insert(0, 'field', field)
 
     if(thr is None):
         return pred_df, None, None

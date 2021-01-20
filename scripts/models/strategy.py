@@ -115,32 +115,32 @@ def simulation(match_data, params, plot=False):
     return simulation_df, fig
 
 def strategy_stats(testset, pred, true,
-                   simulation_params):
+                   params):
 
-    field = simulation_params['field']
-    thr_list = simulation_params['thr_list']
-    filter_bet_list = simulation_params['filter_bet_list']
+    field = params['field']
+    thr_list = params['thr_list']
+    filter_bet_list = params['filter_bet_list']
 
     result_df = pd.DataFrame()
     ckp_df = pd.DataFrame()
 
     for thr in tqdm(thr_list, desc='Thr \t'):
-        for filter_bet in tqdm(filter_bet_list, desc='Filter Bet \t'):
-            _, _, thr_outcome = thr_analysis(true, pred, simulation_params)
+        for filter_bet in filter_bet_list:
+            _, _, thr_outcome = thr_analysis(true, pred, params)
 
             if (thr_outcome[str(thr)]['tpr'] != 'nan'):
 
-                simulation_params['thr'] = thr
-                simulation_params['filter_bet'] = filter_bet
-                pred_df, outcome, _ = evaluate_results(true, pred, simulation_params, plot=False)
+                params['thr'] = thr
+                params['filter_bet'] = filter_bet
+                pred_df, outcome, _ = evaluate_results(true, pred, params, plot=False)
                 sim_data = postprocessing_test_data(testset, pred_df)
 
                 sim_result, _ = simulation(sim_data,
-                                            simulation_params,
+                                            params,
                                             plot=False)
 
                 if(sim_result is not None):
-                    summary = summarize_sim_result(sim_result, simulation_params)
+                    summary = summarize_sim_result(sim_result, params)
                     if(summary is None):
                         continue
                 else:
@@ -155,7 +155,7 @@ def strategy_stats(testset, pred, true,
 
     result_df = result_df.reset_index(drop=True)
 
-    save_dir = simulation_params['save_dir']
+    save_dir = params['save_dir']
     if(save_dir is not None):
         filepath = f'{save_dir}simulation_analysis_{field}.csv'
         result_df.to_csv(filepath, sep=';', decimal=',')

@@ -37,7 +37,7 @@ def generate_test_data(league_params):
 def generate_output(matches_df, predictions, thr=None):
 
     outcome_df = generate_outcome(matches_df, predictions, thr)
-
+    # print(outcome_df)
     if(thr is not None):
         sugg_event = outcome_df[(outcome_df['outcome_1X'] == True) |
                                 (outcome_df['outcome_X2'] == True)]
@@ -46,13 +46,18 @@ def generate_output(matches_df, predictions, thr=None):
             if(sugg_event.loc[i, 'outcome_1X'] and not sugg_event.loc[i, 'outcome_X2']):
                 sugg_event.loc[i, 'event'] = '1X'
                 sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_1X'])
+
             elif(not sugg_event.loc[i, 'outcome_1X'] and sugg_event.loc[i, 'outcome_X2']):
                 sugg_event.loc[i, 'event'] = 'X2'
                 sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_X2'])
+
             elif(sugg_event.loc[i, 'outcome_X2'] and sugg_event.loc[i, 'outcome_1X']):
-                #TODO -> definire cosa consigliare in caso di overlapping tra 1X e X2 --> consiglio la X?
-                sugg_event.loc[i, 'event'] = '1X / X2'
-                sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_1X']) + ' / ' + str(sugg_event.loc[i, 'pred_X2'])
+                if(sugg_event.loc[i, 'pred_1X'] > sugg_event.loc[i, 'pred_X2']):
+                    sugg_event.loc[i, 'event'] = '1X'
+                    sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_1X'])
+                else:
+                    sugg_event.loc[i, 'event'] = 'X2'
+                    sugg_event.loc[i, 'prob'] = str(sugg_event.loc[i, 'pred_X2'])
 
         if(len(sugg_event) > 0):
             outcome = sugg_event.drop(['outcome_1X', 'outcome_X2', 'home', 'away'], axis=1)\
@@ -67,7 +72,7 @@ def generate_output(matches_df, predictions, thr=None):
             return None
 
     else:
-        outcome = outcome_df[['match', '1X', 'pred_1X', 'X2', 'pred_X2']]\
+        outcome = outcome_df[['match', '1X', 'pred_1X', 'pred_1X_bet', 'X2', 'pred_X2', 'pred_X2_bet']]\
                                     .set_index('match')\
                                     .transpose()\
                                     .to_dict()
