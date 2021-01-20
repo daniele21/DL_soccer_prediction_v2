@@ -12,6 +12,7 @@ production_paths: dict {'serie_a': {'model_params': path,
                         }
 
 """
+PRODUCTION_CONFIG_FILE = 'resources/production/production_paths.json'
 
 STATIC_DIR = 'api/v1/static/'
 DATA_DIR = 'resources/leagues_data/'
