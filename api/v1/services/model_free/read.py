@@ -35,7 +35,44 @@ def get_teams(league_name):
         #                                   'teams': teams}))
 
         teams = teams_extraction(league_name)
+        teams.sort()
 
-        response = make_response(jsonify(teams), 200)
+        response_dict = {'league_name': league_name,
+                    'teams': teams}
+
+        response = make_response(response_dict, 200)
+
+    return response
+
+@app.route('/api/v1/read/teams', methods=['GET'])
+def get_teams_from_league():
+    """
+
+    Requested Args:
+        league_name: str
+
+    Returns:
+        response: dict { 'league_name': str,
+                         'teams': list }
+    """
+
+    args = request.args
+    league_name = args['league']
+
+    outcome, msg = check_league(league_name)
+    if not outcome:
+        response = make_response(msg, 404)
+    else:
+        # teams = sorted(LEAGUE.TEAMS_LEAGUE[str(league_name).lower()])
+        # response = make_response(jsonify({'league_name': league_name,
+        #                                   'teams': teams}))
+
+        teams = teams_extraction(league_name)
+        teams.sort()
+
+        response_dict = {'league_name': league_name,
+                         'teams': teams}
+
+        response = make_response(response_dict, 200)
 
     return response
