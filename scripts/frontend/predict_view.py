@@ -3,8 +3,10 @@ import tkinter as tk
 from tkinter import ttk
 
 from scripts.constants.configs import ICON_PATH, AWAY, HOME
-from scripts.constants.league import LEAGUE_NAMES, TEAMS_LEAGUE
-from scripts.frontend.actions import league_on_change
+from scripts.constants.league import LEAGUE_NAMES, TEAMS_LEAGUE, SERIE_A, LEAGUE_DECODER
+from scripts.constants.paths import DATA_DIR
+from scripts.data.data_from_api import Data_Api, Api_Match_Filter
+from scripts.frontend.actions import league_on_change, load_matches
 from scripts.frontend.api_requests import league_request, league_teams_request
 from scripts.frontend.graphic_objects import insertOptionMenu
 from scripts.frontend.gui_interface import Frame_Window, Child_Window
@@ -21,9 +23,11 @@ class Predict_window(Child_Window):
         super().__init__(master, controller)
 
         self.api_config = api_config
+        self.api_match = Data_Api()
 
         self.league_list = self.init_leagues()
         self.teams_dict = self.init_teams()
+        self.next_matches = self.get_next_matches()
 
         self.init_elements()
         self.main_window()
@@ -58,6 +62,18 @@ class Predict_window(Child_Window):
 
         return teams_dict
 
+    def get_next_matches(self):
+        filter = Api_Match_Filter()
+
+        matches_dict = {}
+
+        for league in LEAGUE_DECODER['league2league'].keys():
+            matches = self.api_match.get_matches_from_league(league, DATA_DIR)
+            next_matches = filter.filter_next_matches(matches)
+
+            matches_dict[league] = next_matches
+
+        return matches_dict
 
     def init_elements(self):
         self.matches_vars = {'home_team': [],
@@ -77,23 +93,17 @@ class Predict_window(Child_Window):
                        'matches': Frame_Window(self, None),
                        'buttons': Frame_Window(self, None)}
 
-        # ttk.Button(self, text='prova').pack()
 
         # TEAMA MENU ITEMS
-        # league_grid = Grid_Structure(1, 1, 1, 3, 20, 20)
         league_pack = Pack_Structure(fill=tk.X,
                                      padx=5, pady=5)
 
         first_item = 'Select one League'
-        # league_menu = insertOptionMenu(self.frames['league'], self.league_var,
-        #                                first_item, self.league_list
-        #                                )
         league_menu = insertOptionMenu(self.frames['league'], self.league_var,
                                        elem_list=self.league_list
                                        )
         place_widget(league_menu, league_pack)
 
-        # calculate_grid = Grid_Structure(league_grid.row + 15, 3, 1, 1)
         calculate_pack = Pack_Structure(side=tk.RIGHT, padx=30, pady=50)
 
         # CALCULATE BUTTON
@@ -107,29 +117,19 @@ class Predict_window(Child_Window):
                                         command=lambda *args, x=args_fn: calculate_action(x, *args)
                                         )
         place_widget(self.confirm_button, calculate_pack)
-        # self.confirm_button.grid(row=calculate_grid.row,
-        #                          column=2,
-        #                          padx=10,
-        #                          pady=5)
 
-        # CLEAR BUTTON
+
+        # LOAD MATCHES BUTTON
         args_fn = {'root': self,
-                   # 'teams': self.teams,
-                   'teams_list': self.teams_dict,
+                   'matches_vars': self.matches_vars,
+                   'next_matches': self.next_matches,
                    'league_var': self.league_var,}
 
-        self.clear_button = tk.Button(self.frames['buttons'], text='Clear All',
-                                      # command=lambda *args, x=args_fn:
-                                      # clear_all_action(x, *args)
+        self.load_button = tk.Button(self.frames['buttons'], text='Load Matches',
+                                      command=lambda *args, x=args_fn: load_matches(x, *args)
                                       )
         clear_pack = Pack_Structure(side=tk.LEFT, padx=30, pady=50)
-
-        place_widget(self.clear_button, clear_pack)
-
-        # self.clear_button.grid(row=calculate_grid.row,
-        #                        column=3,
-        #                        padx=10,
-        #                        pady=5)
+        place_widget(self.load_button, clear_pack)
 
         # ROUND
         # tk.Label(self.root, text='Round N.').grid(row=calculate_grid.row - 1,
@@ -153,15 +153,19 @@ class Predict_window(Child_Window):
 
     def main_window(self):
 
+        self.confirm_button.configure(state=tk.DISABLED)
+        self.load_button.configure(state=tk.DISABLED)
+
         self.league_var.set('Select League')
 
         args_fn = {'root': self,
                    'frames': self.frames,
                    'teams_dict': self.teams_dict,
                    'matches': self.matches_vars,
+                   'next_matches': self.next_matches,
                    'league_var': self.league_var,
                    'ok_button': self.confirm_button,
-                   'clear_button': self.clear_button
+                   'load_button': self.load_button
                    }
 
         self.league_var.trace('w',

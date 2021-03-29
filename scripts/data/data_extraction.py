@@ -3,6 +3,7 @@ import pandas as pd
 from core.str2bool import str2bool
 from core.time_decorator import timing
 from core.file_manager.os_utils import exists, ensure_folder
+from scripts.constants.configs import DEFAULT_N_PREV_MATCH
 from scripts.constants.paths import DATA_DIR
 
 from scripts.data.preprocessing import (preprocessing_season,
@@ -145,6 +146,14 @@ def extract_test_data(league_name, n_prev_match, test_size):
     league_df = feature_engineering_league(league_df, n_prev_match)
 
     return league_df
+
+def extract_league_seasons(league_name, n_prev_match=DEFAULT_N_PREV_MATCH):
+
+    league_path = f'{DATA_DIR}{league_name}/{league_name}_npm={n_prev_match}.csv'
+    league_csv = pd.read_csv(league_path, index_col=0)
+
+    return league_csv
+
     
     
     

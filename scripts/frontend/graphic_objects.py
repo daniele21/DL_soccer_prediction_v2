@@ -8,8 +8,8 @@ from tkinter import ttk
 # l1 = ttk.Label(text="Test", style="BW.TLabel")
 # l2 = ttk.Label(text="Test", style="BW.TLabel")
 from scripts.constants.configs import HOME, AWAY
-from scripts.frontend.config import DEFAULT_FONT_STYLE, DEFAULT_STYLE_MENU
-from scripts.frontend.gui_interface import Frame_Window
+from scripts.frontend.config import DEFAULT_FONT_STYLE, DEFAULT_STYLE_MENU, DEFAULT_ENTRY_PARAMS
+from scripts.frontend.gui_interface import Frame_Window, Child_Window
 from scripts.frontend.window_manager import place_widget, Pack_Structure
 from scripts.gui.gui_utils import destroyMenus
 
@@ -32,18 +32,15 @@ def insertOptionMenu(root, var, elem_list, first_item=None,
     return menu
 
 
-def insert_entry(root, var, params=None):
-    # return ttk.Entry(root,
-    #                  textvariable=var,
-    #                  # justify=params['justify'],
-    #                  # font=(FONT, 10, 'bold'),
-    #                  width=7
-    #                  )
+def insert_entry(root, var=None, params=DEFAULT_ENTRY_PARAMS):
+    if(var is None):
+        var = tk.StringVar()
+
     return tk.Entry(root,
                          textvariable=var,
-                         # justify=params['justify'],
-                         # font=(FONT, 10, 'bold'),
-                         width=7
+                         justify=params['justify'],
+                         font=params['font'],
+                         width=params['width']
                          )
 
 def insert_label(root, text,
@@ -120,11 +117,15 @@ def _insert_match_menus(root, frames, teams_list, matches):
         match_widget_dict = insertMatch(frame, teams_list, str(i))
 
         matches_list.append(match_widget_dict)
-        i += 1
 
         frame.pack()
 
-        home_team, away_team = match_widget_dict['team_var'][HOME].get(), match_widget_dict['team_var'][AWAY].get()
+        # if(next_matches is not None):
+        #     next_home_teams, next_away_teams = next_matches['home_teams'].to_list(), next_matches['away_teams'].to_list()
+        #     match_widget_dict['team_var'][HOME].set(next_home_teams[i])
+        #     match_widget_dict['team_var'][AWAY].set(next_away_teams[i])
+
+        # home_team, away_team = match_widget_dict['team_var'][HOME].get(), match_widget_dict['team_var'][AWAY].get()
         # home_bet, away_bet = match_widget_dict['bet_var'][HOME].get(), match_widget_dict['bet_var'][AWAY].get()
 
         # if(home_team != DEFAULT_TEAM and away_team != DEFAULT_TEAM):
@@ -133,6 +134,32 @@ def _insert_match_menus(root, frames, teams_list, matches):
         matches['home_team'].append(match_widget_dict['team_var'][HOME])
         matches['away_team'].append(match_widget_dict['team_var'][AWAY])
 
+        i += 1
+
 
     return matches_list
+
+def show_list_view(root, elem_list=None):
+
+    list_view = Child_Window(root, None)
+
+    listbox_frame = Frame_Window(list_view, None)
+    listbox_frame.pack()
+
+    # LISTBOX
+    listbox = tk.Listbox(listbox_frame)
+
+    if(elem_list is not None):
+        for i, elem in enumerate(elem_list):
+            listbox.insert(i, str(elem))
+
+    listbox.pack()
+
+    # INSERT BUTTON
+    insert_button = tk.Button(list_view, text='Insert')
+    insert_button.pack()
+
+    list_view.mainloop()
+
+    return list_view, listbox, insert_button
 

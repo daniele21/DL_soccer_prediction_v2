@@ -57,7 +57,8 @@ def check_npm(npm):
 
 def check_training_args(args):
 
-    check = 'epochs' in list(args.keys()) and 'patience' in list(args.keys())
+    check = 'epochs' in list(args.keys()) and \
+            'patience' in list(args.keys())
 
     if not check:
         msg = f'Args not found: {list(args.keys())}'
@@ -97,7 +98,7 @@ def check_predict_paths(model_dir, model_name):
                     'check': True,
                     'paths':paths}
 
-        return response
+    return response
 
 def check_simulation_params(sim_params):
     params_list = list(sim_params.keys())

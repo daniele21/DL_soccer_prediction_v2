@@ -130,8 +130,8 @@ def save_simulation(simulation_df, params, folder_dir):
     ensure_folder(folder_path)
     filepath = f'{folder_path}{filename}'
 
-    if (params['verbose']):
-        logger.info(f' > Saving training details at {filepath}')
+    # if (params['verbose']):
+    #     logger.info(f' > Saving training details at {filepath}')
 
     simulation_df.to_csv(filepath, sep=';', decimal=',')
 
@@ -141,6 +141,7 @@ def save_simulation(simulation_df, params, folder_dir):
 def save_model_paths_production(league_name, model_dir, model_name):
     production_paths = load_production_paths()
 
+    model_dir = f'{model_dir}'
     league_params_path = f'{model_dir}1.league_params.json'
     data_params_path = f'{model_dir}2.data_params.json'
     model_params_path = f'{model_dir}3.model_params.json'
@@ -148,7 +149,8 @@ def save_model_paths_production(league_name, model_dir, model_name):
     feat_eng_path = f'{model_dir}feat_eng'
 
 
-    production_paths[league_name] = {'model_params': model_params_path,
+    production_paths[league_name] = {'model_dir': model_dir,
+                                     'model_params': model_params_path,
                                      'league_params': league_params_path,
                                      'data_params': data_params_path,
                                      'model_path': model_path,

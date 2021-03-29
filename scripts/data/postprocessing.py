@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import pandas as pd
 
+from scripts.constants.configs import AWAY, HOME
+
 
 def labeling_predictions(predictions, thr, true_series=None):
     pred_df = pd.DataFrame()
@@ -48,6 +50,7 @@ def postprocessing_test_data(test_data, pred_df):
 
         bet_odds.append(bet)
 
+    data['field'] = pred_df['field'].to_list()
     data['match'] = matches
     data['event'] = events
     data['bet'] = bet_odds
@@ -60,17 +63,19 @@ def postprocessing_test_data(test_data, pred_df):
 
 def generate_outcome(matches_df, predictions, thr=None):
 
-    outcome_df = pd.DataFrame({'match':[],
-                               'home':[],
-                               'away':[],
-                               '1X':[],
+    outcome_df = pd.DataFrame({'match': [],
+                               'home': [],
+                               'away': [],
+                               '1X': [],
                                'pred_1X': [],
+                               'pred_1X_bet': [],
                                'outcome_1X': [],
-                               'X2':[],
+                               'X2': [],
                                'pred_X2': [],
-                               'outcome_X2':[]})
+                               'pred_X2_bet': [],
+                               'outcome_X2': []})
 
-    for field in ['home', 'away']:
+    for field in [HOME, AWAY]:
         field_df = matches_df[field]
         pred_list = predictions[field]
 
@@ -80,6 +85,7 @@ def generate_outcome(matches_df, predictions, thr=None):
             opponent = field_df.loc[index]['f-opponent']
             odd = field_df.loc[index]['f-bet-WD']
             pred = pred_list[i]
+            pred_odd = 1/pred
             outcome = pred > thr if thr is not None else False
 
             row = pd.DataFrame()
@@ -92,12 +98,14 @@ def generate_outcome(matches_df, predictions, thr=None):
                     row['away'] = [opponent]
                     row['1X'] = [odd]
                     row['pred_1X'] = [pred]
+                    row['pred_1X_bet'] = [pred_odd]
                     row['outcome_1X'] = [outcome]
 
                     outcome_df = outcome_df.append(row)
                 else:
                     outcome_df.loc[outcome_df['home'] == team, '1X'] = odd
                     outcome_df.loc[outcome_df['home'] == team, 'pred_1X'] = pred
+                    outcome_df.loc[outcome_df['home'] == team, 'pred_1X_bet'] = pred_odd
                     outcome_df.loc[outcome_df['home'] == team, 'outcome_1X'] = outcome
 
             else:
@@ -108,12 +116,14 @@ def generate_outcome(matches_df, predictions, thr=None):
                     row['away'] = [team]
                     row['X2'] = [odd]
                     row['pred_X2'] = [pred]
+                    row['pred_X2_bet'] = [pred_odd]
                     row['outcome_X2'] = [outcome]
 
                     outcome_df = outcome_df.append(row)
                 else:
                     outcome_df.loc[outcome_df['away'] == team, 'X2'] = odd
                     outcome_df.loc[outcome_df['away'] == team, 'pred_X2'] = pred
+                    outcome_df.loc[outcome_df['away'] == team, 'pred_X2_bet'] = pred_odd
                     outcome_df.loc[outcome_df['away'] == team, 'outcome_X2'] = outcome
 
     outcome_df['outcome_1X'] = outcome_df['outcome_1X'].astype(bool)
@@ -122,5 +132,5 @@ def generate_outcome(matches_df, predictions, thr=None):
 
     return outcome_df
 
-
-
+def feature_importance(model):
+    pass

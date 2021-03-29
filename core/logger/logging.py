@@ -16,3 +16,8 @@ logging.basicConfig(
 
 logger = logging.getLogger('Logger')
 logger.setLevel(logging.DEBUG)
+
+# def log_info(text):
+#
+#     pass
+    # logger.info(f'{}text')

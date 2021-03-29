@@ -8,7 +8,7 @@ from scripts.constants.configs import HOME, AWAY
 from scripts.data import constants as K
 from scripts.data.data_extraction import Database_Manager
 from scripts.data.preprocessing import data_preprocessing
-from scripts.data.feature_engineering import Feature_engineering_v1, Feature_engineering_v2
+from scripts.data.feature_engineering import Feature_engineering_v1, Feature_engineering_v2, Feature_engineering_v3
 from scripts.data.datasets import create_test_dataloader, create_training_dataloader
 from scripts.utils.utils import logger
 from core.file_manager.saving import save_object
@@ -47,6 +47,14 @@ def generate_dataset(input_data, params):
                                                normalize=normalize,
                                                field=HOME)
         away_feat_eng = Feature_engineering_v2(away_data,
+                                               normalize=normalize,
+                                               field=AWAY)
+
+    elif(int(params['version']) == 3):
+        home_feat_eng = Feature_engineering_v3(home_data,
+                                               normalize=normalize,
+                                               field=HOME)
+        away_feat_eng = Feature_engineering_v3(away_data,
                                                normalize=normalize,
                                                field=AWAY)
 

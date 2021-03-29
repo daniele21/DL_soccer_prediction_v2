@@ -21,6 +21,7 @@ DEFAULT_SAVE_DIR = None
 DEFAULT_VERBOSE = True
 DEFAULT_CKP_BOUNDS = [(0, 10), (10, 20), (20,30), (30,40), (40,50),
                       (50,60), (60,70), (70,80)]
+DEFAULT_N_PREV_MATCH = 10
 
 FIRST_PATIENCE = 10
 
@@ -99,3 +100,6 @@ API_PROCESS = '/api/v1/process/'
 ICON_PATH = 'scripts/frontend/resources/icon.png'
 
 
+# POISSON MODEL
+MAX_GOALS = 10
+DEFAULT_OVER_UNDER_LIST = [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5]

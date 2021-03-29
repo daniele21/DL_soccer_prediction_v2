@@ -2,6 +2,7 @@
 #%% SERIE_A
 
 SERIE_A = 'serie_a'
+SERIE_A_ID = 2019
 
 SERIE_A_PATH = ['https://www.football-data.co.uk/mmz4281/1011/I1.csv',
                'https://www.football-data.co.uk/mmz4281/1112/I1.csv',
@@ -43,8 +44,31 @@ SERIE_A_TEAMS = [PARMA, FIORENTINA, UDINESE, CAGLIARI, ROMA, SAMPDORIA,
                  TORINO, VERONA, INTER, BOLOGNA, MILAN, JUVENTUS,
                  LAZIO, ATALANTA, GENOA, SASSUOLO, NAPOLI,
                  SPEZIA, BENEVENTO, CROTONE]
+
+SERIE_A_DECODER = {  'AC Milan': MILAN,
+                     'ACF Fiorentina': FIORENTINA,
+                     'AS Roma': ROMA,
+                     'Atalanta BC': ATALANTA,
+                     'Benevento Calcio': BENEVENTO,
+                     'Bologna FC 1909': BOLOGNA,
+                     'Cagliari Calcio': CAGLIARI,
+                     'FC Crotone': CROTONE,
+                     'FC Internazionale Milano': INTER,
+                     'Genoa CFC': GENOA,
+                     'Hellas Verona FC': VERONA,
+                     'Juventus FC': JUVENTUS,
+                     'Parma Calcio 1913': PARMA,
+                     'SS Lazio': LAZIO,
+                     'SSC Napoli': NAPOLI,
+                     'Spezia Calcio': SPEZIA,
+                     'Torino FC': TORINO,
+                     'UC Sampdoria': SAMPDORIA,
+                     'US Sassuolo Calcio': SASSUOLO,
+                     'Udinese Calcio': UDINESE}
+
 #%% PREMIER
 PREMIER = 'premier_league'
+PREMIER_ID = 2021
 
 PREMIER_PATH = ['https://www.football-data.co.uk/mmz4281/1011/E0.csv',
                'https://www.football-data.co.uk/mmz4281/1112/E0.csv',
@@ -60,10 +84,8 @@ PREMIER_PATH = ['https://www.football-data.co.uk/mmz4281/1011/E0.csv',
 
 LIVERPOOL = 'Liverpool'
 WEST_HAM = 'West Ham'
-BOURNEMOUTH = 'Bournemouth'
 BURNLEY = 'Burnley'
 CRYSTAL_PALACE = 'Crystal Palace'
-WATFORD = 'Watford'
 TOTTENHAM = 'Tottenham'
 LEICESTER = 'Leicester'
 NEWCASTLE = 'Newcastle'
@@ -72,7 +94,6 @@ ARSENAL = 'Arsenal'
 ASTON_VILLA = 'Aston Villa'
 BRIGHTON = 'Brighton'
 EVERTON = 'Everton'
-NORWICH = 'Norwich'
 SOUTHAMPTON = 'Southampton'
 MAN_CITY = 'Man City'
 SHEFFIELD_UNITED = 'Sheffield United'
@@ -87,8 +108,30 @@ PREMIER_TEAMS = [LIVERPOOL, WEST_HAM, BURNLEY, CRYSTAL_PALACE, LEEDS, WEST_BROM,
                  ARSENAL, ASTON_VILLA, BRIGHTON, EVERTON, SOUTHAMPTON,
                  MAN_CITY, SHEFFIELD_UNITED, CHELSEA, WOLVES, FULHAM]
 
+PREMIER_DECODER = { 'Arsenal FC': ARSENAL,
+                    'Aston Villa FC': ASTON_VILLA,
+                    'Brighton & Hove Albion FC': BRIGHTON,
+                    'Burnley FC': BURNLEY,
+                    'Chelsea FC': CHELSEA,
+                    'Crystal Palace FC':CRYSTAL_PALACE,
+                    'Everton FC': EVERTON,
+                    'Fulham FC': FULHAM,
+                    'Leeds United FC': LEEDS,
+                    'Leicester City FC': LEICESTER,
+                    'Liverpool FC': LIVERPOOL,
+                    'Manchester City FC': MAN_CITY,
+                    'Manchester United FC': MAN_UNITED,
+                    'Newcastle United FC': NEWCASTLE,
+                    'Sheffield United FC': SHEFFIELD_UNITED,
+                    'Southampton FC': SOUTHAMPTON,
+                    'Tottenham Hotspur FC': TOTTENHAM,
+                    'West Bromwich Albion FC': WEST_BROM,
+                    'West Ham United FC': WEST_HAM,
+                    'Wolverhampton Wanderers FC': WOLVES}
+
 #%%
 PREMIER_2 = 'premier_2'
+PREMIER_2_ID = 2016
 
 PREMIER_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/E1.csv',
                 'https://www.football-data.co.uk/mmz4281/1112/E1.csv',
@@ -102,9 +145,11 @@ PREMIER_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/E1.csv',
                 'https://www.football-data.co.uk/mmz4281/2021/E1.csv']
 
 LUTON = 'Luton'
+BOURNEMOUTH = 'Bournemouth'
 BARNSLEY = 'Barnsley'
 BLACKBURN = 'Blackburn'
 BRENTFORD = 'Brentford'
+COVENTRY = 'Coventry'
 MILLWALL = 'Millwall'
 READING = 'Reading'
 STOKE = 'Stoke'
@@ -120,11 +165,15 @@ CHARLTON = 'Charlton'
 DERBY = 'Derby'
 FULHAM = 'Fulham'
 HULL = 'Hull'
+NORWICH = 'Norwich'
 MIDDLESBROUGH = 'Middlesbrough'
 PRESTON = 'Preston'
 QPR = 'QPR'
 SHEFFIELD_WEDS = 'Sheffield Weds'
 WEST_BROM = 'West Brom'
+WATFORD = 'Watford'
+WYCOMBE = 'Wycombe'
+ROTHERHAM = 'Rotherham'
 
 PREMIER_2_TEAMS = [LUTON, BARNSLEY, BLACKBURN, BRENTFORD, MILLWALL,
                    READING, STOKE, SWANSEA, WIGAN, NOTTINGAM_FOREST,
@@ -132,9 +181,35 @@ PREMIER_2_TEAMS = [LUTON, BARNSLEY, BLACKBURN, BRENTFORD, MILLWALL,
                    CHARLTON, DERBY, FULHAM, HULL, MIDDLESBROUGH,
                    PRESTON, QPR, SHEFFIELD_WEDS, WEST_BROM]
 
+PREMIER_2_DECODER = {'AFC Bournemouth': BOURNEMOUTH,
+                     'Barnsley FC': BARNSLEY,
+                     'Birmingham City FC': BIRMINGHAM,
+                     'Blackburn Rovers FC': BLACKBURN,
+                     'Brentford FC': BRENTFORD,
+                     'Bristol City FC':BRISTOL_CITY,
+                     'Cardiff City FC': CARDIFF,
+                     'Coventry City FC': COVENTRY,
+                     'Derby County FC': DERBY,
+                     'Huddersfield Town AFC': HUDDERSFIELD,
+                     'Luton Town FC': LUTON,
+                     'Middlesbrough FC': MIDDLESBROUGH,
+                     'Millwall FC': MILLWALL,
+                     'Norwich City FC': NORWICH,
+                     'Nottingham Forest FC': NOTTINGAM_FOREST,
+                     'Preston North End FC': PRESTON,
+                     'Queens Park Rangers FC': QPR,
+                     'Reading FC': READING,
+                     'Rotherham United FC': ROTHERHAM,
+                     'Sheffield Wednesday FC': SHEFFIELD_WEDS,
+                     'Stoke City FC': STOKE,
+                     'Swansea City AFC': SWANSEA,
+                     'Watford FC': WATFORD,
+                     'Wycombe Wanderers FC': WYCOMBE}
+
 #%%
 
 JUPILIER = 'jupilier'
+JUPILIER_ID = 2009
 
 JUPILIER_PATH = ['https://www.football-data.co.uk/mmz4281/1011/B1.csv',
                  'https://www.football-data.co.uk/mmz4281/1112/B1.csv',
@@ -171,9 +246,11 @@ JUPILIER_TEAMS = [BEERSCHOT, GENK, LEUVEN, CERCLE_BRUGGE, ST_TRUIDEN, WAREGEM, W
                   ANDERLECHT, CHARLEROI, EUPEN, CLUB_BRUGGE, ST_LIEGI, 
                   KORTRIJK, OOSTENDE, MECHELEN, GENT, MOUSCRON, ANTWERP]
 
+
 # LIGUE 1
 
 LIGUE_1 = 'ligue_1'
+LIGUE_1_ID = 2015
 
 LIGUE_1_PATH = ['https://www.football-data.co.uk/mmz4281/1011/F1.csv',
                 'https://www.football-data.co.uk/mmz4281/1112/F1.csv',
@@ -213,8 +290,30 @@ RENNES = 'Rennes'
 LIGUE_1_TEAMS = [ANGERS, BORDEAUX, BREST, DIJON, LENS, LILLA, LIONE, LORIENT, MARSIGLIA, METZ,
                  MONACO, MONTPELLIER, NANTES, NIMES, NIZZA, PARIS_SG, REIMS, RENNES, ST_ETIENNE, STRASBURGO]
 
+LIGUE_1_DECODER =  {'AS Monaco FC': MONACO,
+                    'AS Saint-Étienne': ST_ETIENNE,
+                    'Angers SCO': ANGERS,
+                    "Dijon Football Côte d'Or": DIJON,
+                    'FC Girondins de Bordeaux': BORDEAUX,
+                    'FC Lorient': LORIENT,
+                    'FC Metz': METZ,
+                    'FC Nantes': NANTES,
+                    'Lille OSC': LILLA,
+                    'Montpellier HSC': MONTPELLIER,
+                    'Nîmes Olympique': NIMES,
+                    'OGC Nice': NIZZA,
+                    'Olympique Lyonnais': LIONE,
+                    'Olympique de Marseille': MARSIGLIA,
+                    'Paris Saint-Germain FC': PARIS_SG,
+                    'RC Strasbourg Alsace': STRASBURGO,
+                    'Racing Club de Lens': LENS,
+                    'Stade Brestois 29': BREST,
+                    'Stade Rennais FC 1901': RENNES,
+                    'Stade de Reims': REIMS}
+
 # LIGUE 2
 LIGUE_2 = 'ligue_2'
+LIGUE_2_ID = 2142
 
 LIGUE_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/F2.csv',
                  'https://www.football-data.co.uk/mmz4281/1112/F2.csv',
@@ -258,6 +357,7 @@ LIGUE_2_TEAMS = [TOULOUSE, AJACCIO, AMIENS, AUXERRE, CHAMBLY,
 
 # EREDIVISIE
 EREDIVISIE = 'eredivisie'
+EREDIVISIE_ID = 2003
 
 EREDIVISIE_PATH = ['https://www.football-data.co.uk/mmz4281/1011/N1.csv',
                      'https://www.football-data.co.uk/mmz4281/1112/N1.csv',
@@ -294,8 +394,28 @@ EREDIVISIE_TEAMS = [AJAX, AZ, DEN_HAAG, EMMEN, FEYENOORD, GRONINGEN, HEERENVEEN,
                     PSV, SITTARD, SPARTA_ROTTERDAM, TWENTE, UTRECHT, VENLO, VITESSE,
                     WAALWIJK, WILLEM_II, ZWOLLE]
 
+EREDIVISIE_DECODER = {  'ADO Den Haag': DEN_HAAG,
+                        'AFC Ajax':AJAX,
+                        'AZ': AZ,
+                        'FC Emmen': EMMEN,
+                        'FC Groningen': GRONINGEN,
+                        "FC Twente '65": TWENTE,
+                        'FC Utrecht':UTRECHT,
+                        'Feyenoord Rotterdam': FEYENOORD,
+                        'Fortuna Sittard': SITTARD,
+                        'Heracles Almelo': HERACLES,
+                        'PEC Zwolle': ZWOLLE,
+                        'PSV': PSV,
+                        'RKC Waalwijk': WAALWIJK,
+                        'SBV Vitesse':VITESSE,
+                        'SC Heerenveen': HEERENVEEN,
+                        'Sparta Rotterdam': SPARTA_ROTTERDAM,
+                        'VVV Venlo': VENLO,
+                        'Willem II Tilburg': WILLEM_II}
+
 # LIGA
 LIGA = 'liga'
+LIGA_ID = 2014
 
 LIGA_PATH = ['https://www.football-data.co.uk/mmz4281/1011/SP1.csv',
              'https://www.football-data.co.uk/mmz4281/1112/SP1.csv',
@@ -337,8 +457,30 @@ LIGA_TEAMS = [ALAVES, ATH_BILBAO, ATH_MADRID, BARCELLONA, BETIS, CADICE, CELTA,
               EIBAR, ELCHE, GETAFE, GRANADA, HUESCA, LEVANTE, OSASUNA, REAL_MADRID,
               REAL_SOCIEDAD, SIVIGLIA, VALENCIA, VALLADOLID, VILLARREAL]
 
+LIGA_DECODER = {'Athletic Club': ATH_BILBAO,
+                'CA Osasuna':OSASUNA,
+                'Club Atlético de Madrid': ATH_MADRID,
+                'Cádiz CF': CADICE,
+                'Deportivo Alavés': ALAVES,
+                'Elche CF':ELCHE,
+                'FC Barcelona': BARCELLONA,
+                'Getafe CF':GETAFE,
+                'Granada CF': GRANADA,
+                'Levante UD': LEVANTE,
+                'RC Celta de Vigo': CELTA,
+                'Real Betis Balompié': BETIS,
+                'Real Madrid CF': REAL_MADRID,
+                'Real Sociedad de Fútbol': REAL_SOCIEDAD,
+                'Real Valladolid CF': VALLADOLID,
+                'SD Eibar': EIBAR,
+                'SD Huesca': HUESCA,
+                'Sevilla FC': SIVIGLIA,
+                'Valencia CF': VALENCIA,
+                'Villarreal CF': VILLARREAL}
+
 # LIGA_2
 LIGA_2 = 'liga_2'
+LIGA_2_ID = 2077
 
 LIGA_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/SP2.csv',
                  'https://www.football-data.co.uk/mmz4281/1112/SP2.csv',
@@ -388,6 +530,7 @@ LIGA_2_TEAMS = [ALBACETE, ALCORON, ALMERIA, CARTAGENA, CASTELLON, ESPANYOL, FUEN
 
 # BUNDESLIGA
 BUNDESLIGA = 'bundesliga'
+BUNDESLIGA_ID = 2002
 
 BUNDESLIGA_PATH = ['https://www.football-data.co.uk/mmz4281/1011/D1.csv',
                      'https://www.football-data.co.uk/mmz4281/1112/D1.csv',
@@ -427,11 +570,29 @@ BUNDESLIGA_TEAMS = [BAYERN_MUNICH, EIN_FRANKFURT, FC_KOLN, STUTTGART,
                     WOLFSBURG, HERTHA, AUGSBURG, BIELEFELD, LEVERKUSEN,
                     MAINZ, MGLADBACH, SCHALKE_04, HOFFENHEIM, FREIBURG]
 
-
+BUNDESLIGA_DECODER = {  '1. FC Köln': FC_KOLN,
+                        '1. FC Union Berlin': UNION_BERLIN,
+                        '1. FSV Mainz 05': MAINZ,
+                        'Bayer 04 Leverkusen': LEVERKUSEN,
+                        'Borussia Dortmund': DORTMUND,
+                        'Borussia Mönchengladbach': MGLADBACH,
+                        'DSC Arminia Bielefeld': BIELEFELD,
+                        'Eintracht Frankfurt': EIN_FRANKFURT,
+                        'FC Augsburg': AUGSBURG,
+                        'FC Bayern München': BAYERN_MUNICH,
+                        'FC Schalke 04': SCHALKE_04,
+                        'Hertha BSC': HERTHA,
+                        'RB Leipzig': RB_LEIPZIG,
+                        'SC Freiburg': FREIBURG,
+                        'SV Werder Bremen': WERDER_BREMEN,
+                        'TSG 1899 Hoffenheim': HOFFENHEIM,
+                        'VfB Stuttgart': STUTTGART,
+                        'VfL Wolfsburg': WOLFSBURG}
 
 # BUNDESLIGA_2
 
 BUNDESLIGA_2 = 'bundesliga_2'
+BUNDESLIGA_2_ID = 2004
 
 BUNDESLIGA_2_PATH = ['https://www.football-data.co.uk/mmz4281/1011/D2.csv',
                      'https://www.football-data.co.uk/mmz4281/1112/D2.csv',
@@ -519,3 +680,37 @@ N_TEAMS = {SERIE_A : 20,
            LIGA_2: 22,
            BUNDESLIGA: 18,
            BUNDESLIGA_2: 18}
+
+LEAGUE_ENCODER = {'league2id': {PREMIER: PREMIER_ID,
+                                PREMIER_2: PREMIER_2_ID,
+                                SERIE_A: SERIE_A_ID,
+                                BUNDESLIGA: BUNDESLIGA_ID,
+                                BUNDESLIGA_2: BUNDESLIGA_2_ID,
+                                JUPILIER: JUPILIER_ID,
+                                EREDIVISIE: EREDIVISIE_ID,
+                                LIGUE_1: LIGUE_1_ID,
+                                LIGUE_2: LIGUE_2_ID,
+                                LIGA: LIGA_ID,
+                                LIGA_2: LIGA_2_ID},
+           }
+
+LEAGUE_DECODER = {'id2league': {PREMIER_ID: PREMIER,
+                                PREMIER_2_ID: PREMIER_2,
+                                SERIE_A_ID: SERIE_A ,
+                                BUNDESLIGA_ID: BUNDESLIGA,
+                                BUNDESLIGA_2_ID: BUNDESLIGA_2,
+                                JUPILIER_ID: JUPILIER,
+                                EREDIVISIE_ID: EREDIVISIE,
+                                LIGUE_1_ID: LIGUE_1,
+                                LIGUE_2_ID: LIGUE_2,
+                                LIGA_ID: LIGA,
+                                LIGA_2_ID: LIGA_2
+                                },
+                   'league2league': {PREMIER: PREMIER_DECODER,
+                                     SERIE_A: SERIE_A_DECODER,
+                                     PREMIER_2: PREMIER_2_DECODER,
+                                     LIGUE_1: LIGUE_1_DECODER,
+                                     EREDIVISIE: EREDIVISIE_DECODER,
+                                     BUNDESLIGA: BUNDESLIGA_DECODER,
+                                     LIGA: LIGA_DECODER}
+                  }

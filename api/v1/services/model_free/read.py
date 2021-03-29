@@ -76,3 +76,23 @@ def get_teams_from_league():
         response = make_response(response_dict, 200)
 
     return response
+
+@app.route('/api/v1/read/matches', methods=['GET'])
+def get_round():
+
+    """
+    Requested Args:
+        - league_name: str
+
+    """
+
+    args = request.args
+
+    league_name = args['league_name']
+
+    outcome, msg = check_league(league_name)
+    if not outcome:
+        response = make_response(msg, 404)
+    else:
+        pass
+        # compute next round matches

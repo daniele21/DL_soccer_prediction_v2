@@ -496,8 +496,26 @@ def _fill_per_field(test_data, field_teams, opponent_teams, odds, f_home):
                 matches[field] = matches[field].append(data.loc[idx])
 
     return matches
-            
-            
+
+
+def poisson_data_preprocessing(league_df):
+
+    home_columns = {'home_goals': 'goals',
+                  'HomeTeam': 'team',
+                  'AwayTeam': 'opponent'}
+
+    away_columns = {'away_goals': 'goals',
+                   'AwayTeam': 'team',
+                   'HomeTeam': 'opponent'}
+
+    home_data = league_df.rename(columns=home_columns).assign(home=1)
+    away_data = league_df.rename(columns=away_columns).assign(home=0)
+
+    # poisson_data = pd.concat(home_data, away_data)
+    poisson_data = home_data.append(away_data)
+
+    return poisson_data
+
         
         
         

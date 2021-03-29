@@ -1,5 +1,6 @@
 from flask import make_response, jsonify, request, render_template
 
+from scripts.data.data_from_api import Data_Api
 from scripts.utils.checker import check_league, check_data_league
 import scripts.constants.league as LEAGUE
 from scripts.constants.paths import DATA_DIR
@@ -42,6 +43,9 @@ def update_league(league_name):
             fail_msg = f'Failed Update: {league_name} - npm={npm} \n {response["msg"]}'
             logger.error(fail_msg)
             response = make_response(f'Failed Update: {league_name} -> npm = {npm} \n {response["msg"]}', 400)
+
+        # UPDATE MATCHES LEAGUE
+        Data_Api().write_league_matches(league_name, DATA_DIR)
 
     return response
 
@@ -86,7 +90,7 @@ def update_all_leagues():
                 response[league_name] = f'Successful Update: {league_name} -> npm = {npm}'
 
             else:
-                fail_msg = f'Failed Update: {league_name} - npm={npm} \n {response["msg"]}'
+                fail_msg = f'Failed Update: {league_name} - npm={npm} \n {update_response["msg"]}'
                 logger.error(fail_msg)
                 response[league_name] = f'Failed Update: {league_name} -> npm = {npm} : {fail_msg}'
 

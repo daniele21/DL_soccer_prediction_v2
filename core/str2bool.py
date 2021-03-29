@@ -1,3 +1,5 @@
+from scripts.constants.configs import DEFAULT_PRODUCTION
+
 
 def str2bool(value):
     str_value = str(value).lower()
@@ -6,4 +8,4 @@ def str2bool(value):
     elif str_value == 'false':
         return False
     else:
-        return False
+        return DEFAULT_PRODUCTION
